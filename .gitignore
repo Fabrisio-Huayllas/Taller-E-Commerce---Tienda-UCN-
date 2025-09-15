@@ -6,6 +6,7 @@
 # dotenv files
 .env
 
+/logs
 # bin and obj folders
 /[Bb]in/
 /[Oo]bj/

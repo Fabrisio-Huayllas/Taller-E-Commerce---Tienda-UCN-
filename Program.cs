@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
+
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +17,7 @@ builder.Services.AddOpenApi();
 
 #region Identity Configuration
 Log.Information("Configurando Identity");
+builder.Services.AddDataProtection();
 builder.Services.AddIdentityCore<User>(options =>
 {
     //Configuración de contraseña
@@ -48,7 +52,17 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(connectionString));
 #endregion
 
+
+
 var app = builder.Build();
+
+#region Database Migration
+Log.Information("Aplicando migraciones a la base de datos");
+using (var scope = app.Services.CreateScope())
+{
+    await DataSeeder.Initialize(scope.ServiceProvider);
+}
+#endregion
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

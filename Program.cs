@@ -1,15 +1,27 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
-using TiendaProyecto.src.Middleware; 
-using TiendaProyecto.src.Exceptions;  
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Serilog;
+using TiendaProyecto.src.Domain.Models;
+using TiendaProyecto.src.Infrastructure.Data;
+using TiendaProyecto.src.Middleware;
+using TiendaProyecto.src.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurar Serilog
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services));
+
+// Configuración de la conexión a la base de datos SQLite
+var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase") 
+    ?? throw new InvalidOperationException("Connection string SqliteDatabase no configurado");
 
 // Agregar servicios de controllers y validación automática
 builder.Services.AddControllers()
@@ -51,7 +63,37 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tienda API", Version = "v1" });
 });
 
+// Configuración de Identity
+Log.Information("Configurando Identity");
+builder.Services.AddDataProtection();
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
+
+    options.User.RequireUniqueEmail = true;
+
+    options.User.AllowedUserNameCharacters = builder.Configuration["IdentityConfiguration:AllowedUserNameCharacters"] 
+        ?? throw new InvalidOperationException("Los caracteres permitidos para UserName no están configurados.");
+})
+.AddRoles<Role>()
+.AddEntityFrameworkStores<DataContext>()
+.AddDefaultTokenProviders();
+
+// Configuración de la base de datos SQLite
+Log.Information("Configurando base de datos SQLite");
+builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlite(connectionString));
+
 var app = builder.Build();
+
+// Aplicar migraciones
+Log.Information("Aplicando migraciones a la base de datos");
+using (var scope = app.Services.CreateScope())
+{
+    await DataSeeder.Initialize(scope.ServiceProvider);
+}
 
 // Middlewares globales
 app.UseMiddleware<CorrelationMidware>();
@@ -69,7 +111,7 @@ app.UseHttpsRedirection();
 // Mapear endpoints de controllers
 app.MapControllers();
 
-// Mantener tu endpoint minimal API de ejemplo
+// Endpoint minimal API de ejemplo
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

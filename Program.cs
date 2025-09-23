@@ -11,6 +11,8 @@ using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Middleware;
 using TiendaProyecto.src.Exceptions;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,28 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(problem);
         };
     });
+    
+#region Authentication Configuration
+Log.Information("Configurando autenticación JWT");
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }
+    ).AddJwtBearer(options =>
+    {
+        string jwtSecret = builder.Configuration["JWTSecret"] ?? throw new InvalidOperationException("La clave secreta JWT no está configurada.");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateLifetime = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero //Sin tolerencia a tokens expirados
+        };
+    });
+#endregion    
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -107,7 +131,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseAuthorization();
 // Mapear endpoints de controllers
 app.MapControllers();
 

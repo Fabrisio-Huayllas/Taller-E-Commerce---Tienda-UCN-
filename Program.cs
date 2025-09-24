@@ -11,6 +11,12 @@ using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Middleware;
 using TiendaProyecto.src.Exceptions;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Application.Services.Implements;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
+using TiendaProyecto.src.Infrastructure.Repositories.Implements;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services));
+
 
 // Configuración de la conexión a la base de datos SQLite
 var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase") 
@@ -52,11 +59,36 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(problem);
         };
     });
+    
+#region Authentication Configuration
+Log.Information("Configurando autenticación JWT");
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }
+    ).AddJwtBearer(options =>
+    {
+        string jwtSecret = builder.Configuration["JWTSecret"] ?? throw new InvalidOperationException("La clave secreta JWT no está configurada.");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateLifetime = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero //Sin tolerencia a tokens expirados
+        };
+    });
+#endregion    
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITokenService, TokenService>(); // Registro del servicio de token
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Configurar Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {
@@ -107,7 +139,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseAuthorization();
 // Mapear endpoints de controllers
 app.MapControllers();
 

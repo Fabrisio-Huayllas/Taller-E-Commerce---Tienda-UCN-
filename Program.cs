@@ -13,6 +13,10 @@ using TiendaProyecto.src.Middleware;
 using TiendaProyecto.src.Exceptions;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Application.Services.Implements;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
+using TiendaProyecto.src.Infrastructure.Repositories.Implements;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services));
+
 
 // Configuración de la conexión a la base de datos SQLite
 var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase") 
@@ -81,6 +86,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITokenService, TokenService>(); // Registro del servicio de token
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Configurar Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {

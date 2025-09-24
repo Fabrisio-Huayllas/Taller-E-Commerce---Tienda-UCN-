@@ -56,6 +56,21 @@ namespace TiendaProyecto.src.Application.Services.Implements
             return (token, user.Id);
         }
 
+        public async Task ChangePasswordAsync(int userId, ChangePasswordDTO dto)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new KeyNotFoundException("Usuario no encontrado.");
+
+            var passwordValid = await _userRepository.CheckPasswordAsync(user, dto.CurrentPassword);
+            if (!passwordValid)
+                throw new UnauthorizedAccessException("La contraseña actual es incorrecta.");
+
+            var result = await _userRepository.UpdatePasswordAsync(user, dto.NewPassword);
+            if (!result)
+                throw new Exception("No se pudo actualizar la contraseña.");
+        }
+
         /// <summary>
         /// (Opcional) Elimina usuarios no confirmados.
         /// </summary>

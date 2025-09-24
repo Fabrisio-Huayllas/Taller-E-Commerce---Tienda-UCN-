@@ -20,6 +20,8 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// <returns>Un string que representa el token JWT generadon y la id del usuario.</returns>
         Task<(string token, int userId)> LoginAsync(LoginDTO loginDTO, HttpContext httpContext);
 
+        Task ChangePasswordAsync(int userId, ChangePasswordDTO changePasswordDTO);
+
         
         /// <summary>
         /// Elimina usuarios no confirmados.

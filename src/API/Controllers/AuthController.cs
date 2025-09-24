@@ -3,14 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
- // Ajusta según tu proyecto
-using TiendaProyecto.src.Exceptions; // Tus excepciones personalizadas
+using TiendaProyecto.src.Exceptions; 
 using Serilog;
 using TiendaProyecto.src.Application.DTO.AuthDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace TiendaProyecto.src.API.Controllers
 {
-     [ApiController]
+    [ApiController]
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
@@ -33,12 +34,20 @@ namespace TiendaProyecto.src.API.Controllers
 
             Log.Information("Usuario {Email} inició sesión correctamente.", loginDTO.Email);
 
-            return Ok(new 
-            { 
-                success = true, 
-                token, 
-                userId 
+            return Ok(new
+            {
+                success = true,
+                token,
+                userId
             });
+        }
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _userService.ChangePasswordAsync(userId, dto);
+            return Ok(new { message = "Contraseña actualizada correctamente." });
         }
     }
 }

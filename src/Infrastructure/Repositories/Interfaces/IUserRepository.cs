@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using TiendaProyecto.src.Domain.Models;
 namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
 {
-     public interface IUserRepository
+    public interface IUserRepository
     {
         /// <summary>
         /// Obtiene un usuario por su ID.
@@ -85,5 +85,9 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// </summary>
         /// <returns>Número de usuarios eliminados</returns>
         Task<int> DeleteUnconfirmedAsync();
+        
+
+
+        Task<bool> UpdatePasswordAsync(User user, string newPassword);
     }
 }

@@ -7,9 +7,6 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
     /// <summary>
     /// Interfaz para el servicio de usuarios.
     /// </summary>
-    /// <summary>
-    /// Interfaz para el servicio de usuarios.
-    /// </summary>
     public interface IUserService
     {
         /// <summary>
@@ -17,12 +14,38 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         /// <param name="loginDTO">DTO que contiene las credenciales del usuario.</param>
         /// <param name="httpContext">El contexto HTTP actual.</param>
-        /// <returns>Un string que representa el token JWT generadon y la id del usuario.</returns>
+        /// <returns>Un string que representa el token JWT generado y la id del usuario.</returns>
         Task<(string token, int userId)> LoginAsync(LoginDTO loginDTO, HttpContext httpContext);
 
+        /// <summary>
+        /// Cambia la contraseña del usuario.
+        /// </summary>
+        /// <param name="userId">Id del usuario que desea cambiar la contraseña.</param>
+        /// <param name="changePasswordDTO">DTO con la contraseña actual y nueva.</param>
         Task ChangePasswordAsync(int userId, ChangePasswordDTO changePasswordDTO);
 
-        
+        /// <summary>
+        /// Registra un nuevo usuario.
+        /// </summary>
+        /// <param name="registerDTO">DTO que contiene la información del nuevo usuario.</param>
+        /// <param name="httpContext">El contexto HTTP actual.</param>
+        /// <returns>Un string que representa el mensaje de éxito del registro.</returns>
+        Task<string> RegisterAsync(RegisterDTO registerDTO, HttpContext httpContext);
+
+        /// <summary>
+        /// Verifica el correo electrónico del usuario.
+        /// </summary>
+        /// <param name="verifyEmailDTO">DTO que contiene el correo electrónico y el código de verificación.</param>
+        /// <returns>Un string que representa el mensaje de éxito de la verificación.</returns>
+        Task<string> VerifyEmailAsync(VerifyEmailDTO verifyEmailDTO);
+
+        /// <summary>
+        /// Reenvía el código de verificación al correo electrónico del usuario.
+        /// </summary>
+        /// <param name="resendEmailVerificationCodeDTO">DTO que contiene el correo electrónico del usuario.</param>
+        /// <returns>Un string que representa el mensaje de éxito del reenvío.</returns>
+        Task<string> ResendEmailVerificationCodeAsync(ResendEmailVerificationCodeDTO resendEmailVerificationCodeDTO);
+
         /// <summary>
         /// Elimina usuarios no confirmados.
         /// </summary>

@@ -5,20 +5,25 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using Serilog;
-using TiendaProyecto.src.Domain.Models;
-using TiendaProyecto.src.Infrastructure.Data;
-using TiendaProyecto.src.Middleware;
-using TiendaProyecto.src.Exceptions;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TiendaProyecto.src.Application.Services.Interfaces;
+using Microsoft.OpenApi.Models;
+using Resend;
+using Serilog;
+using System.Text;
+using TiendaProyecto.src.Application.Mappers;
 using TiendaProyecto.src.Application.Services.Implements;
-using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
+using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Domain.Models;
+using TiendaProyecto.src.Exceptions;
+using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Infrastructure.Repositories.Implements;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
+using TiendaProyecto.src.Middleware;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
+MapperExtensions.ConfigureMapster();
 
 // Configurar Serilog
 builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -27,7 +32,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 
 
 // Configuración de la conexión a la base de datos SQLite
-var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase") 
+var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase")
     ?? throw new InvalidOperationException("Connection string SqliteDatabase no configurado");
 
 // Agregar servicios de controllers y validación automática
@@ -59,7 +64,21 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(problem);
         };
     });
-    
+
+
+#region Email Service Configuration
+Log.Information("Configurando servicio de Email");
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(o =>
+{
+    o.ApiToken = builder.Configuration["ResendAPIKey"] ?? throw new InvalidOperationException("El token de API de Resend no está configurado.");
+});
+builder.Services.AddTransient<IResend, ResendClient>();
+#endregion
+
+
+
 #region Authentication Configuration
 Log.Information("Configurando autenticación JWT");
 builder.Services.AddAuthentication(options =>
@@ -89,13 +108,15 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>(); // Registro del servicio de token
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IVerificationCodeRepository, VerificationCodeRepository>();
 // Configurar Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tienda API", Version = "v1" });
 });
 
-// Configuración de Identity
+#region Configuración de Identity
 Log.Information("Configurando Identity");
 builder.Services.AddDataProtection();
 builder.Services.AddIdentityCore<User>(options =>
@@ -106,26 +127,29 @@ builder.Services.AddIdentityCore<User>(options =>
 
     options.User.RequireUniqueEmail = true;
 
-    options.User.AllowedUserNameCharacters = builder.Configuration["IdentityConfiguration:AllowedUserNameCharacters"] 
+    options.User.AllowedUserNameCharacters = builder.Configuration["IdentityConfiguration:AllowedUserNameCharacters"]
         ?? throw new InvalidOperationException("Los caracteres permitidos para UserName no están configurados.");
 })
 .AddRoles<Role>()
 .AddEntityFrameworkStores<DataContext>()
 .AddDefaultTokenProviders();
+#endregion
 
-// Configuración de la base de datos SQLite
+#region Configuración de la base de datos SQLite
 Log.Information("Configurando base de datos SQLite");
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(connectionString));
+#endregion
 
 var app = builder.Build();
 
-// Aplicar migraciones
+#region Aplicar migraciones
 Log.Information("Aplicando migraciones a la base de datos");
 using (var scope = app.Services.CreateScope())
 {
     await DataSeeder.Initialize(scope.ServiceProvider);
 }
+#endregion
 
 // Middlewares globales
 app.UseMiddleware<CorrelationMidware>();
@@ -141,33 +165,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-// Mapear endpoints de controllers
 app.MapControllers();
-
-// Endpoint minimal API de ejemplo
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
 app.Run();
-
-// Modelo para minimal API
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -1,18 +1,15 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Threading.Tasks;
-
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
-using TiendaProyecto.src.Middleware; 
-using TiendaProyecto.src.Exceptions;  
-using Microsoft.OpenApi.Models;
+using TiendaProyecto.src.Exceptions;
+using TiendaProyecto.src.Middleware;
 
 
 namespace TiendaProyecto.src.Middleware

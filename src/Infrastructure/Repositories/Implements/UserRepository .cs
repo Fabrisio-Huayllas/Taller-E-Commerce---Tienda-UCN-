@@ -22,7 +22,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             _context = context;
             _userManager = userManager;
-            _daysOfDeleteUnconfirmedUsers = configuration.GetValue<int?>("Jobs:DaysOfDeleteUnconfirmedUsers") 
+            _daysOfDeleteUnconfirmedUsers = configuration.GetValue<int?>("Jobs:DaysOfDeleteUnconfirmedUsers")
                 ?? throw new InvalidOperationException("La configuración 'Jobs:DaysOfDeleteUnconfirmedUsers' no está definida.");
         }
 
@@ -147,6 +147,17 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             var roles = await _userManager.GetRolesAsync(user);
             return roles.FirstOrDefault()!;
+        }
+        
+        public async Task<bool> UpdatePasswordAsync(User user, string newPassword)
+        {
+            // Genera un token seguro para resetear la contraseña
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Resetea la contraseña usando el token
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
+
+            return result.Succeeded;
         }
     }
 }

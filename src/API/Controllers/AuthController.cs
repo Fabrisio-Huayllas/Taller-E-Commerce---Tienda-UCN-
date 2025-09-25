@@ -8,9 +8,9 @@ using TiendaProyecto.src.Application.DTO;
 using TiendaProyecto.src.Application.DTO.AuthDTO;
 using TiendaProyecto.src.Application.DTO.BaseResponse;
 using TiendaProyecto.src.Application.Services.Interfaces;
-// Ajusta según tu proyecto
-using TiendaProyecto.src.Exceptions; // Tus excepciones personalizadas
-
+using TiendaProyecto.src.Exceptions;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace TiendaProyecto.src.API.Controllers
 {
@@ -44,6 +44,21 @@ namespace TiendaProyecto.src.API.Controllers
                 userId
             });
         }
+
+        /// <summary>
+        /// Cambia la contraseña del usuario autenticado.
+        /// </summary>
+        /// <param name="dto">DTO con la contraseña actual y nueva.</param>
+        /// <returns>Resultado de la operación.</returns>
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _userService.ChangePasswordAsync(userId, dto);
+            return Ok(new { message = "Contraseña actualizada correctamente." });
+        }
+
         /// <summary>
         /// Registra un nuevo usuario.
         /// </summary>
@@ -55,7 +70,6 @@ namespace TiendaProyecto.src.API.Controllers
             var message = await _userService.RegisterAsync(registerDTO, HttpContext);
             return Ok(new GenericResponse<string>("Registro exitoso", message));
         }
-
 
         /// <summary>
         /// Verifica el correo electrónico del usuario.
@@ -81,5 +95,4 @@ namespace TiendaProyecto.src.API.Controllers
             return Ok(new GenericResponse<string>("Código de verificación reenviado exitosamente", message));
         }
     }
-
 }

@@ -51,5 +51,9 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         /// <returns>Número de usuarios eliminados</returns>
         Task<int> DeleteUnconfirmedAsync();
+
+
+        Task<UserProfileDTO> GetProfileAsync(int userId);
+        Task UpdateProfileAsync(int userId, UpdateProfileDTO updateProfileDTO);
     }
 }

@@ -94,5 +94,24 @@ namespace TiendaProyecto.src.API.Controllers
             var message = await _userService.ResendEmailVerificationCodeAsync(resendEmailVerificationCodeDTO);
             return Ok(new GenericResponse<string>("Código de verificación reenviado exitosamente", message));
         }
+
+
+        [HttpGet("profile")]
+[Authorize]
+public async Task<IActionResult> GetProfile()
+{
+    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+    var profile = await _userService.GetProfileAsync(userId);
+    return Ok(profile);
+}
+
+[HttpPut("profile")]
+[Authorize]
+public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
+{
+    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+    await _userService.UpdateProfileAsync(userId, dto);
+    return Ok(new { message = "Perfil actualizado correctamente." });
+}
     }
 }

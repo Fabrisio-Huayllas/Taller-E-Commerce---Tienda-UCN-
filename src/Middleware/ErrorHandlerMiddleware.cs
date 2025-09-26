@@ -63,6 +63,7 @@ namespace TiendaProyecto.src.Middleware
                 ForbiddenException fb => (HttpStatusCode.Forbidden, fb.ErrorCode, fb.Message, null),
                 UnauthorizedAppException ua => (HttpStatusCode.Unauthorized, ua.ErrorCode, ua.Message, null),
                 BadRequestAppException br => (HttpStatusCode.BadRequest, br.ErrorCode, br.Message, br.Errors),
+                AppException ae => (HttpStatusCode.BadRequest, "APP_ERROR", ae.Message, null),
                 ValidationException fv => (
                     HttpStatusCode.BadRequest,
                     "VALIDATION_ERROR",

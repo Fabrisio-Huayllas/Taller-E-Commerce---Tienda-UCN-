@@ -7,6 +7,9 @@ using TiendaProyecto.src.Application.DTO.AuthDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using TiendaProyecto.src.Exceptions;
+
 
 namespace TiendaProyecto.src.Application.Services.Implements
 {
@@ -22,11 +25,13 @@ namespace TiendaProyecto.src.Application.Services.Implements
         private readonly IVerificationCodeRepository _verificationCodeRepository;
         private readonly int _verificationCodeExpirationTimeInMinutes;
 
+         private readonly UserManager<User> _userManager;
         public UserService(ITokenService tokenService,
         IUserRepository userRepository,
         IEmailService emailService,
         IVerificationCodeRepository verificationCodeRepository,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        UserManager<User> userManager)
         {
 
             _tokenService = tokenService;
@@ -34,6 +39,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
             _emailService = emailService;
             _verificationCodeRepository = verificationCodeRepository;
             _configuration = configuration;
+            _userManager = userManager;
             _verificationCodeExpirationTimeInMinutes = _configuration.GetValue<int>("VerificationCode:ExpirationTimeInMinutes");
         }
 
@@ -247,6 +253,37 @@ namespace TiendaProyecto.src.Application.Services.Implements
             }
             throw new Exception("Error al verificar el correo electrónico.");
         }
+
+        public async Task<UserProfileDTO> GetProfileAsync(int userId)
+{
+    var user = await _userManager.FindByIdAsync(userId.ToString())
+               ?? throw new NotFoundException("Usuario no encontrado.");
+
+    return new UserProfileDTO
+    {
+        Id = user.Id,
+        Email = user.Email!,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        PhoneNumber = user.PhoneNumber
+    };
+}
+
+public async Task UpdateProfileAsync(int userId, UpdateProfileDTO updateProfileDTO)
+{
+    var user = await _userManager.FindByIdAsync(userId.ToString())
+               ?? throw new NotFoundException("Usuario no encontrado.");
+
+    user.FirstName = updateProfileDTO.FirstName ?? user.FirstName;
+    user.LastName = updateProfileDTO.LastName ?? user.LastName;
+    user.PhoneNumber = updateProfileDTO.PhoneNumber ?? user.PhoneNumber;
+
+    var result = await _userManager.UpdateAsync(user);
+
+    if (!result.Succeeded)
+        throw new AppException("Error al actualizar el perfil: " +
+            string.Join(", ", result.Errors.Select(e => e.Description)));
+}
 
     }
 }

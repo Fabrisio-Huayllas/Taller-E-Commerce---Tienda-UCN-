@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using TiendaProyecto.src.Application.Services.Interfaces;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 
-namespace TiendaProyecto.src.Application.Services.Implements
+namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 {
     /// <summary>
     /// Repositorio para manejar operaciones del carrito de compras

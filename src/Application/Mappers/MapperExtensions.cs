@@ -1,5 +1,4 @@
 using Mapster;
-using TiendaProyecto.src.Application.Mappers;
 
 namespace TiendaProyecto.src.Application.Mappers
 {
@@ -12,9 +11,19 @@ namespace TiendaProyecto.src.Application.Mappers
         /// <summary>
         /// Configura los mapeos globales.
         /// </summary>
-        public static void ConfigureMapster()
+        public static void ConfigureMapster(IServiceProvider serviceProvider)
         {
-            UserMapper.ConfigureAllMappings();
+            var productMapper = serviceProvider.GetService<ProductMapper>();
+            productMapper?.ConfigureAllMappings();
+
+            var userMapper = serviceProvider.GetService<UserMapper>();
+            userMapper?.ConfigureAllMappings();
+
+            var cartMapper = serviceProvider.GetService<CartMapper>();
+            cartMapper?.ConfigureAllMappings();
+
+            var orderMapper = serviceProvider.GetService<OrderMapper>();
+            orderMapper?.ConfigureAllMappings();
 
             // Configuración global de Mapster para ignorar valores nulos
             TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);

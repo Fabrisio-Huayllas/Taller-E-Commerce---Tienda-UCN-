@@ -1,6 +1,6 @@
 using TiendaProyecto.src.Domain.Models;
 
-namespace TiendaProyecto.src.Application.Services.Interfaces
+namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
 {
     /// <summary>
     /// Interfaz para el repositorio del carrito de compras

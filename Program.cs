@@ -1,5 +1,7 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Hangfire;
+using Hangfire.Storage.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using Resend;
 using Serilog;
 using System.Text;
+using TiendaProyecto.src.Application.Jobs.Implements;
 using TiendaProyecto.src.Application.Mappers;
 using TiendaProyecto.src.Application.Services.Implements;
 using TiendaProyecto.src.Application.Services.Interfaces;
@@ -22,8 +25,11 @@ using TiendaProyecto.src.Middleware;
 
 
 
+
 var builder = WebApplication.CreateBuilder(args);
-MapperExtensions.ConfigureMapster();
+
+
+
 
 // Configurar Serilog
 builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -101,6 +107,10 @@ builder.Services.AddAuthentication(options =>
     });
 #endregion    
 
+//Mappers
+builder.Services.AddScoped<ProductMapper>();
+builder.Services.AddScoped<UserMapper>();
+
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -110,6 +120,14 @@ builder.Services.AddScoped<ITokenService, TokenService>(); // Registro del servi
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IVerificationCodeRepository, VerificationCodeRepository>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
+
+
+
+
 // Configurar Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {
@@ -141,13 +159,52 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(connectionString));
 #endregion
 
-var app = builder.Build();
+#region Hangfire Configuration
+Log.Information("Configurando los trabajos en segundo plano de Hangfire");
+var cronExpression = builder.Configuration["Jobs:CronJobDeleteUnconfirmedUsers"] ?? throw new InvalidOperationException("La expresión cron para eliminar usuarios no confirmados no está configurada.");
+var timeZone = TimeZoneInfo.FindSystemTimeZoneById(builder.Configuration["Jobs:TimeZone"] ?? throw new InvalidOperationException("La zona horaria para los trabajos no está configurada."));
+builder.Services.AddHangfire(configuration =>
+{
+    var connectionStringBuilder = new SqliteConnectionStringBuilder(connectionString);
+    var databasePath = connectionStringBuilder.DataSource;
 
-#region Aplicar migraciones
+    configuration.UseSQLiteStorage(databasePath);
+    configuration.SetDataCompatibilityLevel(CompatibilityLevel.Version_170);
+    configuration.UseSimpleAssemblyNameTypeSerializer();
+    configuration.UseRecommendedSerializerSettings();
+});
+builder.Services.AddHangfireServer();
+
+
+#endregion
+
+var app = builder.Build();
+// Configurar el panel de control de Hangfire
+app.UseHangfireDashboard(builder.Configuration["HangfireDashboard:DashboardPath"] ?? throw new InvalidOperationException("La ruta de hangfire no ha sido declarada"), new DashboardOptions
+{
+    StatsPollingInterval = builder.Configuration.GetValue<int?>("HangfireDashboard:StatsPollingInterval") ?? throw new InvalidOperationException("El intervalo de actualización de estadísticas del panel de control de Hangfire no está configurado."),
+    DashboardTitle = builder.Configuration["HangfireDashboard:DashboardTitle"] ?? throw new InvalidOperationException("El título del panel de control de Hangfire no está configurado."),
+    DisplayStorageConnectionString = builder.Configuration.GetValue<bool?>("HangfireDashboard:DisplayStorageConnectionString") ?? throw new InvalidOperationException("La configuración 'HangfireDashboard:DisplayStorageConnectionString' no está definida."),
+});
+
+
+#region Database Migration and jobs Configuration
 Log.Information("Aplicando migraciones a la base de datos");
 using (var scope = app.Services.CreateScope())
 {
     await DataSeeder.Initialize(scope.ServiceProvider);
+    var jobId = nameof(UserJob.DeleteUnconfirmedAsync);
+    RecurringJob.AddOrUpdate<UserJob>(
+        jobId,
+        job => job.DeleteUnconfirmedAsync(),
+        cronExpression,
+        new RecurringJobOptions
+        {
+            TimeZone = timeZone
+        }
+    );
+    Log.Information($"Job recurrente '{jobId}' configurado con cron: {cronExpression} en zona horaria: {timeZone.Id}");
+    MapperExtensions.ConfigureMapster(scope.ServiceProvider);
 }
 #endregion
 

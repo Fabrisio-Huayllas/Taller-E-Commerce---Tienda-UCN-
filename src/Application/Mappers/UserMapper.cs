@@ -16,7 +16,7 @@ namespace TiendaProyecto.src.Application.Mappers
         /// <summary>
         /// Configura el mapeo de RegisterDTO a User.
         /// </summary>
-        public static void ConfigureAllMappings()
+        public void ConfigureAllMappings()
         {
             ConfigureAuthMappings();
         }
@@ -24,7 +24,7 @@ namespace TiendaProyecto.src.Application.Mappers
         /// <summary>
         /// Configura el mapeo de RegisterDTO a User.
         /// </summary>
-        public static void ConfigureAuthMappings()
+        public void ConfigureAuthMappings()
         {
             TypeAdapterConfig<RegisterDTO, User>.NewConfig()
                 .Map(dest => dest.UserName, src => src.Email)

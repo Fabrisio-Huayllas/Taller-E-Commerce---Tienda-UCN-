@@ -1,11 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using System.Net;
-using TiendaProyecto.src.Application.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 
-namespace Tienda_UCN_api.Src.Infrastructure.Repositories.Implements
+namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 {
     public class FileRepository : IFileRepository
     {

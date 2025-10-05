@@ -5,7 +5,8 @@
 
 # dotenv files
 .env
-
+/app.db
+/logs
 # bin and obj folders
 /[Bb]in/
 /[Oo]bj/

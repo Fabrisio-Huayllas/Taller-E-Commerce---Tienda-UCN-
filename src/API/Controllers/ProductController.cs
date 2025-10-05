@@ -7,6 +7,7 @@ using TiendaProyecto.src.Application.DTO.ProductDTO;
 using TiendaProyecto.src.Application.DTO.ProductDTO.AdminDTO;
 using TiendaProyecto.src.Application.DTO.ProductDTO.CustomerDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Exceptions;
 
 namespace TiendaProyecto.src.API.Controllers
 {
@@ -34,6 +35,13 @@ namespace TiendaProyecto.src.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllForAdminAsync([FromQuery] SearchParamsDTO searchParams)
         {
+            var totalItems = await _productService.CountFilteredForAdminAsync(searchParams);
+            var totalPages = (int)Math.Ceiling((double)totalItems / (searchParams.PageSize ?? 10));
+
+            if (searchParams.PageNumber > totalPages && totalPages > 0)
+            {
+                throw new BadRequestAppException("El número de página excede el total de páginas disponibles.");
+            }
             var result = await _productService.GetFilteredForAdminAsync(searchParams);
             if (result == null || result.Products.Count == 0) { throw new KeyNotFoundException("No se encontraron productos."); }
             return Ok(new GenericResponse<ListedProductsForAdminDTO>("Productos obtenidos exitosamente", result));
@@ -85,8 +93,31 @@ namespace TiendaProyecto.src.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateProductDTO createProductDTO)
         {
-            var result = await _productService.CreateAsync(createProductDTO);
-            return Created($"/api/product/{result}", new GenericResponse<string>("Producto creado exitosamente", result));
+           if (!ModelState.IsValid)
+                {
+                    // Convertir errores de ModelState en tu payload estándar
+                    var errors = ModelState
+                        .Where(kvp => kvp.Value?.Errors.Count > 0)
+                        .ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+
+                    return BadRequest(new
+                    {
+                        status = StatusCodes.Status400BadRequest,
+                        code = "VALIDATION_ERROR",
+                        message = "One or more validation errors occurred.",
+                        traceId = HttpContext.TraceIdentifier,
+                        path = HttpContext.Request.Path.Value,
+                        method = HttpContext.Request.Method,
+                        timestamp = DateTime.UtcNow,
+                        errors
+                    });
+                }
+
+                var result = await _productService.CreateAsync(createProductDTO);
+                return Created($"/api/product/{result}", new GenericResponse<string>("Producto creado exitosamente", result));
         }
 
         /// <summary>

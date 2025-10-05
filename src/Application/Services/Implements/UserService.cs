@@ -57,14 +57,14 @@ namespace TiendaProyecto.src.Application.Services.Implements
             if (user == null)
             {
                 Log.Warning($"Login fallido. Usuario no encontrado: {loginDTO.Email} desde IP: {ipAddress}");
-                throw new UnauthorizedAccessException("Credenciales inválidas.");
+                throw new UnauthorizedAppException("Credenciales inválidas.");
             }
 
             var passwordValid = await _userRepository.CheckPasswordAsync(user, loginDTO.Password);
             if (!passwordValid)
             {
                 Log.Warning($"Login fallido. Contraseña incorrecta para {loginDTO.Email} desde IP: {ipAddress}");
-                throw new UnauthorizedAccessException("Credenciales inválidas.");
+                throw new UnauthorizedAppException("Credenciales inválidas.");
             }
 
             string roleName = await _userRepository.GetUserRoleAsync(user)
@@ -84,7 +84,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
 
             var passwordValid = await _userRepository.CheckPasswordAsync(user, dto.CurrentPassword);
             if (!passwordValid)
-                throw new UnauthorizedAccessException("La contraseña actual es incorrecta.");
+                throw new UnauthorizedAppException("La contraseña actual es incorrecta.");
 
             var result = await _userRepository.UpdatePasswordAsync(user, dto.NewPassword);
             if (!result)

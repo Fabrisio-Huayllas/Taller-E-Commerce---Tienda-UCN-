@@ -104,6 +104,19 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero //Sin tolerencia a tokens expirados
         };
+
+        // Configurar eventos para manejar errores de autenticación
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                // Evitar que el middleware de autenticación maneje el error
+                context.HandleResponse();
+
+                // Lanzar una excepción personalizada para que sea manejada por el ErrorHandlerMiddleware
+                throw new UnauthorizedAppException("No autorizado.");
+            }
+        };
     });
 #endregion    
 

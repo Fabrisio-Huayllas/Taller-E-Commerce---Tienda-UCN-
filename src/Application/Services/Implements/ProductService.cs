@@ -143,5 +143,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
             await _productRepository.ToggleActiveAsync(id);
         }
 
+        public async Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams)
+    {
+        // Aquí puedes usar tu repositorio para contar los productos filtrados
+        return await _productRepository.CountFilteredAsync(searchParams);
+    }
+
     }
 }

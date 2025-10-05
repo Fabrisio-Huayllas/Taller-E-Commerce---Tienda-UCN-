@@ -214,5 +214,17 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             product.Stock = stock;
             await _context.SaveChangesAsync();
         }
+
+        public async Task<int> CountFilteredAsync(SearchParamsDTO searchParams)
+    {
+        var query = _context.Products.AsQueryable();
+
+        if (!string.IsNullOrEmpty(searchParams.SearchTerm))
+        {
+            query = query.Where(p => p.Title.Contains(searchParams.SearchTerm));
+        }
+
+        return await query.CountAsync();
+    }
     }
 }

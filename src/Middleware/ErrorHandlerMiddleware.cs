@@ -71,7 +71,13 @@ namespace TiendaProyecto.src.Middleware
                     fv.Errors.GroupBy(e => e.PropertyName)
                              .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                 ),
-                _ => (HttpStatusCode.InternalServerError, "INTERNAL_ERROR", "An internal server error occurred.", null)
+               KeyNotFoundException knf => (HttpStatusCode.NotFound, "NOT_FOUND", knf.Message, null),
+                InvalidOperationException ioe => (HttpStatusCode.BadRequest, "INVALID_OPERATION", ioe.Message, null),
+            TimeoutException te => (HttpStatusCode.TooManyRequests, "TIMEOUT", te.Message, null),
+
+                _ => (HttpStatusCode.InternalServerError, "INTERNAL_ERROR", "An internal server error occurred.", null),
+                
+
             };
         }
     }

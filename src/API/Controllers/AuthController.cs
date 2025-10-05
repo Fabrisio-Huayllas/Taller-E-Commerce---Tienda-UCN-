@@ -1,16 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using TiendaProyecto.src.Application.DTO;
 using TiendaProyecto.src.Application.DTO.AuthDTO;
 using TiendaProyecto.src.Application.DTO.BaseResponse;
 using TiendaProyecto.src.Application.Services.Interfaces;
 using TiendaProyecto.src.Exceptions;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace TiendaProyecto.src.API.Controllers
 {
@@ -97,21 +97,45 @@ namespace TiendaProyecto.src.API.Controllers
 
 
         [HttpGet("profile")]
-[Authorize]
-public async Task<IActionResult> GetProfile()
-{
-    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-    var profile = await _userService.GetProfileAsync(userId);
-    return Ok(profile);
-}
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var profile = await _userService.GetProfileAsync(userId);
+            return Ok(profile);
+        }
 
-[HttpPut("profile")]
-[Authorize]
-public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
-{
-    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-    await _userService.UpdateProfileAsync(userId, dto);
-    return Ok(new { message = "Perfil actualizado correctamente." });
-}
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _userService.UpdateProfileAsync(userId, dto);
+            return Ok(new { message = "Perfil actualizado correctamente." });
+        }
+
+        /// <summary>
+        /// Solicita el envío del código de recuperación de contraseña al correo electrónico del usuario.
+        /// </summary>
+        /// <param name="dto">DTO que contiene el correo electrónico del usuario.</param>
+        /// <returns>Un IActionResult que representa el resultado de la operación.</returns>
+        [HttpPost("recover-password")]
+        public async Task<IActionResult> RecoverPassword([FromBody] ResendEmailVerificationCodeDTO dto)
+        {
+            var message = await _userService.SendPasswordRecoveryCodeAsync(dto.Email);
+            return Ok(new GenericResponse<string>("Código de recuperación enviado exitosamente", message));
+        }
+
+        /// <summary>
+        /// Restablece la contraseña del usuario.
+        /// </summary>
+        /// <param name="dto">DTO que contiene la nueva contraseña y el token de recuperación.</param>
+        /// <returns>Un IActionResult que representa el resultado de la operación.</returns>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO dto)
+        {
+            await _userService.ResetPasswordAsync(dto);
+            return Ok(new GenericResponse<string>("Contraseña restablecida exitosamente"));
+        }
     }
 }

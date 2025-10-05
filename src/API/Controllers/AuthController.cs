@@ -34,7 +34,6 @@ namespace TiendaProyecto.src.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
         {
             var (token, userId) = await _userService.LoginAsync(loginDTO, HttpContext);
-
             Log.Information("Usuario {Email} inició sesión correctamente.", loginDTO.Email);
 
             return Ok(new
@@ -95,7 +94,10 @@ namespace TiendaProyecto.src.API.Controllers
             return Ok(new GenericResponse<string>("Código de verificación reenviado exitosamente", message));
         }
 
-
+        /// <summary>
+        /// Obtiene el perfil del usuario autenticado.
+        /// </summary>
+        /// <returns>Un IActionResult con los datos del perfil del usuario.</returns>
         [HttpGet("profile")]
         [Authorize]
         public async Task<IActionResult> GetProfile()
@@ -105,6 +107,11 @@ namespace TiendaProyecto.src.API.Controllers
             return Ok(profile);
         }
 
+        /// <summary>
+        /// Actualiza el perfil del usuario autenticado.
+        /// </summary>
+        /// <param name="dto">DTO con los datos actualizados del perfil.</param>
+        /// <returns>Un IActionResult que representa el resultado de la operación.</returns>
         [HttpPut("profile")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
@@ -139,3 +146,4 @@ namespace TiendaProyecto.src.API.Controllers
         }
     }
 }
+

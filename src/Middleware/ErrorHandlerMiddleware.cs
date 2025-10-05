@@ -10,16 +10,32 @@ using TiendaProyecto.src.Exceptions;
 
 namespace TiendaProyecto.src.Middleware
 {
+    /// <summary>
+    /// Middleware para manejo centralizado de errores en la aplicación.
+    /// </summary>
+    /// <remarks>
+    /// Captura excepciones no manejadas, mapea a códigos HTTP y devuelve un payload JSON estandarizado
+    /// con información de error, traceId y detalles de la solicitud.
+    /// </remarks>
     public class ErrorHandlerMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ErrorHandlerMiddleware> _logger;
-
+         /// <summary>
+        /// Constructor del middleware.
+        /// </summary>
+        /// <param name="next">Delegate para invocar el siguiente middleware en la pipeline.</param>
+        /// <param name="logger">Logger para registrar excepciones.</param>
         public ErrorHandlerMiddleware(RequestDelegate next, ILogger<ErrorHandlerMiddleware> logger)
         {
             _next = next;
             _logger = logger;
         }
+        /// <summary>
+        /// Método que intercepta la ejecución del pipeline y captura excepciones.
+        /// </summary>
+        /// <param name="context">Contexto HTTP de la solicitud actual.</param>
+        /// <returns>Tarea asincrónica representando la ejecución del middleware.</returns>
         public async Task Invoke(HttpContext context)
         {
             try
@@ -31,6 +47,7 @@ namespace TiendaProyecto.src.Middleware
                 await HandleExceptionAsync(context, ex);
             }
         }
+        
         private async Task HandleExceptionAsync(HttpContext ctx, Exception ex)
         {
             var (status, code, message, errors) = MapException(ex);
@@ -71,12 +88,12 @@ namespace TiendaProyecto.src.Middleware
                     fv.Errors.GroupBy(e => e.PropertyName)
                              .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                 ),
-               KeyNotFoundException knf => (HttpStatusCode.NotFound, "NOT_FOUND", knf.Message, null),
+                KeyNotFoundException knf => (HttpStatusCode.NotFound, "NOT_FOUND", knf.Message, null),
                 InvalidOperationException ioe => (HttpStatusCode.BadRequest, "INVALID_OPERATION", ioe.Message, null),
-            TimeoutException te => (HttpStatusCode.TooManyRequests, "TIMEOUT", te.Message, null),
+                TimeoutException te => (HttpStatusCode.TooManyRequests, "TIMEOUT", te.Message, null),
 
                 _ => (HttpStatusCode.InternalServerError, "INTERNAL_ERROR", "An internal server error occurred.", null),
-                
+
 
             };
         }

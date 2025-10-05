@@ -1,12 +1,8 @@
 # Ecommerce Platform
 
-The objective of this project is to implement a REST API using ASP.NET Core 9 and SQLite to create a ecommerce platform called Tienda UCN. It includes user authentication with JWT, profile, products and cart management.
+Este proyecto implementa una API REST utilizando ASP.NET Core 9 y SQLite para la creación de una plataforma de comercio electrónico llamada Tienda UCN. El sistema incluye autenticación de usuarios con JWT, gestión de productos, carrito de compras, pedidos y subida de imágenes a Cloudinary.
 
-The Repository Pattern is implemented to ensure a clean architecture, separation used for of concerns, and easier maintainability.
-
-Cloudinary is external media storage, allowing efficient handling of images and other assets.
-
-The system is designed for scalability, security, and high performance.
+El proyecto sigue una arquitectura limpia utilizando el patrón Repository, lo que asegura una separación de responsabilidades y facilita el mantenimiento y escalabilidad del sistema.
 
 # Installation
 
@@ -19,43 +15,82 @@ For the execution of the project, the following must be installed:
 Once the above is installed, clone the repository with the command:
 
 
-# Quick Start
-1. Clone this repository to your local machine using CMD:
-```bash
-    git clone https://github.com/Fabrisio-Huayllas/Taller-E-Commerce---Tienda-UCN-.git
-```
-2. Navigate to the project folder:
-```bash
-    cd TiendaProyecto
-```
-3. Open the proyect with Visual Studio Code:
-```bash
-    code .
-```
+# Características Implementadas
+1. Sistema de Autenticación Completo
+Registro de Usuarios:
+        Validación de datos de entrada (nombre, apellido, RUT chileno, email, contraseña, etc.).
+        Contraseñas almacenadas de forma segura utilizando hashing con ASP.NET Core Identity.
+        Asignación automática del rol "Cliente" al registrarse.
+Verificación de Cuenta:
+        Generación de un código de 6 dígitos enviado por correo electrónico.
+        Activación de la cuenta tras la verificación del código.
+Inicio de Sesión:
+        Validación de credenciales y generación de tokens JWT con claims (ID, rol, email, expiración).
+        Manejo seguro de errores de autenticación.
+Recuperación de Contraseña:
+        Generación de un código de recuperación enviado por correo.
+        Validación del código y restablecimiento de la contraseña con reglas de seguridad.
+Cambio de Contraseña:
+        Validación de la contraseña actual y actualización segura de la nueva contraseña.
+2.CRUD Básico de Productos (Admin)
+Creación de Productos:
+    Validación de datos con CreateProductDTO (nombre, precio, stock, categoría, marca, etc.).
+    Persistencia de productos en la base de datos.
+    Protección del endpoint con el rol "Administrador".
+Consulta de Productos:
+    Endpoint para obtener el detalle de un producto por su ID.
+    Endpoint para listar productos con filtros y paginación.
+Actualización y Eliminación de Productos:
+    Endpoints protegidos para actualizar y eliminar productos.
 
-4. Copy the content of the file appsettings.example.json and create an appsettings.json file with the next command:
-```bash
-    cp appsettings.example.json appsettings.json
-```
-  Then replace the variables with your credentials:
+3. Subida de Imágenes con Cloudinary
+   Subida de imágenes asociadas a productos.
+    Validación de tipo de archivo, tamaño y formato.
+    Almacenamiento de la URL de la imagen en la base de datos.
+4. Middleware
+Manejo de Errores:
+    Middleware para capturar y devolver errores personalizados con códigos HTTP y mensajes claros.
+    Correlación:
+    Middleware para agregar un identificador único a cada solicitud para facilitar el rastreo.
 
-**Required configuration:**
-- Replace `JWTSecret` with a strong secret key with at least 32 characters long.
-- Replace `ResendAPIKey` with your resend API Key, you can get your API key in the following link: [Resend - Getting Started](https://resend.com/docs/send-with-dotnet)
-- Replace Cloudinary credentials with your actual values
-- Replace admin `Rut` with the following format XXXXXXXX-X
-- Replace admin `BirthDate` with the following format YYYY-MM-DD
-- Replace admin `PhoneNumber` with the following format +569 XXXXXXXX
-- Replace admin `Password` and de `RandomUserPassword` with an alphanumeric password with at least one capital letter and at least one special character.
-- Replace the `WelcomeSubject`, `From` and `VerificationSubject` with your own email variables, but, i recommend use the `<onboarding@resend.dev>` email domain to use the free plan of resend API.
-- Replace the `TimeZone` with your local time zone, the `CronJobDeleteUnconfirmedUsers` with your own cronjob and the `DaysOfDeleteUnconfirmedUsers` with your own interval on days to delete the unconfirmed users.
-- Replace the `DefaultImageUrl` with your own default image URL.
-- Replace the `CookieExpirationDays` with your cookie expiration time of your preference.
-- Keep the `HangfireDashboard` section if you want a default configuration of the dashboard.
-- Keep the `AllowedUserNameCharacters`, the `ExpirationTimeInMinutes`, `TransformationWidth`, `TransformationCrop`, `TransformationQuality`, `TransformationFetchFormat`, `DefaultPageSize` and the `ImageMaxSizeInBytes` configuration of the appsettings.example.json file.
 
-5. Restore the project dependencies in the terminal:
-```bash
+# Configuración del Proyecto
+1.Clona este repositorio:
+
+2.Navega al directorio del proyecto:
+
+3.Abre el proyecto en Visual Studio Code:
+
+4.Copia el archivo de configuración de ejemplo y crea el archivo appsettings.json:
+
+5.Configura las siguientes variables en appsettings.json:
+
+
+JWTSecret: Llave secreta para firmar los tokens JWT.
+ResendAPIKey: Clave de la API de Resend para el envío de correos.
+Cloudinary: Credenciales para la integración con Cloudinary.
+Admin: Configura el RUT, fecha de nacimiento, número de teléfono y contraseña del administrador.
+Otros: Configura las variables relacionadas con imágenes, tiempo de expiración de cookies, cron jobs, etc.
+(O usar el appsettings.cs proporcionado por el ayudante).
+
+6.Restaurar las dependencias del proyecto.
+
+7. Aplicar las migraciones a la base de datos.
+8. Ejecutar proyecto.
+
+# Endpoints principales
+Autenticación:
+    POST /api/auth/register: Registro de usuarios.
+    POST /api/auth/login: Inicio de sesión.
+    POST /api/auth/recover-password: Solicitud de recuperación de contraseña.
+    PATCH /api/auth/reset-password: Restablecimiento de contraseña.
+    POST /api/auth/verify: Verificación de cuenta.
+Productos (Admin)
+    POST /api/admin/products: Crear un producto.
+    GET /api/admin/products/{id}: Consultar un producto por ID.
+    PUT /api/admin/products/{id}: Actualizar un producto.
+
+
     dotnet restore
 ```
 6. To execute the proyect use the next command in the VSC terminal:

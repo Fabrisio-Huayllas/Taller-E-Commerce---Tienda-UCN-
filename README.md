@@ -193,14 +193,22 @@ Antes de ejecutar el proyecto, instala lo siguiente:
 | **POST** | `/api/auth/recover-password` | Solicitud de recuperación |
 | **PATCH** | `/api/auth/reset-password` | Restablecer contraseña |
 | **POST** | `/api/auth/verify-email` | Verificación de cuenta |
+| **POST** | `/api/auth/resend-email-verification-code` | Verificación de cuenta |
+| **PUT** | `/api/auth/change-password` | Cambio de contraseña |
 
 ###  Productos (Administrador)
 | Método | Endpoint | Descripción |
 |:--------|:-----------|:-------------|
-| **POST** | `/api/admin/products` | Crear un producto |
-| **GET** | `/api/admin/products/{id}` | Obtener un producto por ID |
-| **PUT** | `/api/admin/products/{id}` | Actualizar un producto |
-| **DELETE** | `/api/admin/products/{id}` | Eliminar un producto |
+| **POST** | `/api/admin/product` | Crear un producto |
+| **GET** | `/api/admin/product/{id}` | Obtener un producto por ID |
+| **GET** | `/api/product/admin/products` | Filtrar por paginas  |
+| **PATCH** | `/api/admin/products/{id}/toggie-active` | Desactiva el producto |
+
+###  Productos (Usuario)
+| Método | Endpoint | Descripción |
+|:--------|:-----------|:-------------|
+| **GET** | `/api/product/customer/product` | Filtrar por paginas  |
+
 
 ---
 

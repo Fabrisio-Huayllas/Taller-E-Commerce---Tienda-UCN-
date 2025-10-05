@@ -95,23 +95,31 @@ namespace TiendaProyecto.src.API.Controllers
             return Ok(new GenericResponse<string>("Código de verificación reenviado exitosamente", message));
         }
 
-
+        /// <summary>
+        /// Obtiene el perfil del usuario autenticado.
+        /// </summary>
+        /// <returns>Un IActionResult con los datos del perfil del usuario.</returns>
         [HttpGet("profile")]
-[Authorize]
-public async Task<IActionResult> GetProfile()
-{
-    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-    var profile = await _userService.GetProfileAsync(userId);
-    return Ok(profile);
-}
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var profile = await _userService.GetProfileAsync(userId);
+            return Ok(profile);
+        }
 
-[HttpPut("profile")]
-[Authorize]
-public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
-{
-    int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-    await _userService.UpdateProfileAsync(userId, dto);
-    return Ok(new { message = "Perfil actualizado correctamente." });
-}
-    }
-}
+        /// <summary>
+            /// Actualiza el perfil del usuario autenticado.
+            /// </summary>
+            /// <param name="dto">DTO con los datos actualizados del perfil.</param>
+            /// <returns>Un IActionResult que representa el resultado de la operación.</returns>
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            await _userService.UpdateProfileAsync(userId, dto);
+            return Ok(new { message = "Perfil actualizado correctamente." });
+        }
+            }
+        }

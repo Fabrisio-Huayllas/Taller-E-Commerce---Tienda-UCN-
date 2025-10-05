@@ -5,6 +5,7 @@ using TiendaProyecto.src.Application.DTO.ProductDTO.AdminDTO;
 using TiendaProyecto.src.Application.DTO.ProductDTO.CustomerDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
 using TiendaProyecto.src.Domain.Models;
+using TiendaProyecto.src.Exceptions;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 
 namespace TiendaProyecto.src.Application.Services.Implements
@@ -32,6 +33,32 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con el ID del producto creado.</returns>
         public async Task<string> CreateAsync(CreateProductDTO createProductDTO)
         {
+            // Validar los datos del producto
+    if (string.IsNullOrWhiteSpace(createProductDTO.Title))
+    {
+        throw new BadRequestAppException("El nombre del producto es obligatorio.");
+    }
+
+    if (createProductDTO.Price <= 0)
+    {
+        throw new BadRequestAppException("El precio del producto debe ser mayor a 0.");
+    }
+
+    if (createProductDTO.Stock < 0)
+    {
+        throw new BadRequestAppException("El stock del producto no puede ser negativo.");
+    }
+
+    if (createProductDTO.CategoryName == null)
+    {
+        throw new BadRequestAppException("La categoría del producto es obligatoria.");
+    }
+
+    if (createProductDTO.Images == null || !createProductDTO.Images.Any())
+    {
+        throw new BadRequestAppException("Debe proporcionar al menos una imagen para el producto.");
+    }
+
             Product product = createProductDTO.Adapt<Product>();
             Category category = await _productRepository.CreateOrGetCategoryAsync(createProductDTO.CategoryName) ?? throw new Exception("Error al crear o obtener la categoría del producto.");
             Brand brand = await _productRepository.CreateOrGetBrandAsync(createProductDTO.BrandName) ?? throw new Exception("Error al crear o obtener la marca del producto.");

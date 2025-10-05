@@ -77,5 +77,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// <param name="id">El ID del producto a buscar.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con el producto encontrado o null si no se encuentra.</returns>
         Task<Product?> GetByIdForAdminAsync(int id);
+
+        Task<int> CountFilteredAsync(SearchParamsDTO searchParams);
     }
 }

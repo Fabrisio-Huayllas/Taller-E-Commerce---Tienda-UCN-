@@ -48,6 +48,8 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         /// <param name="id">El ID del producto cuyo estado se cambiará.</param>
         Task ToggleActiveAsync(int id);
+
+         Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams);
     }
 
 }

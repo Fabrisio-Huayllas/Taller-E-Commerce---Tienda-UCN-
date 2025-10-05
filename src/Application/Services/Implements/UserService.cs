@@ -1,14 +1,14 @@
 using Mapster;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Serilog;
 using System;
 using System.Threading.Tasks;
 using TiendaProyecto.src.Application.DTO.AuthDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
 using TiendaProyecto.src.Domain.Models;
-using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using TiendaProyecto.src.Exceptions;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 
 
 namespace TiendaProyecto.src.Application.Services.Implements
@@ -25,7 +25,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
         private readonly IVerificationCodeRepository _verificationCodeRepository;
         private readonly int _verificationCodeExpirationTimeInMinutes;
 
-         private readonly UserManager<User> _userManager;
+        private readonly UserManager<User> _userManager;
         public UserService(ITokenService tokenService,
         IUserRepository userRepository,
         IEmailService emailService,
@@ -255,35 +255,79 @@ namespace TiendaProyecto.src.Application.Services.Implements
         }
 
         public async Task<UserProfileDTO> GetProfileAsync(int userId)
-{
-    var user = await _userManager.FindByIdAsync(userId.ToString())
-               ?? throw new NotFoundException("Usuario no encontrado.");
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString())
+                       ?? throw new NotFoundException("Usuario no encontrado.");
 
-    return new UserProfileDTO
-    {
-        Id = user.Id,
-        Email = user.Email!,
-        FirstName = user.FirstName,
-        LastName = user.LastName,
-        PhoneNumber = user.PhoneNumber
-    };
-}
+            return new UserProfileDTO
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber
+            };
+        }
 
-public async Task UpdateProfileAsync(int userId, UpdateProfileDTO updateProfileDTO)
-{
-    var user = await _userManager.FindByIdAsync(userId.ToString())
-               ?? throw new NotFoundException("Usuario no encontrado.");
+        public async Task UpdateProfileAsync(int userId, UpdateProfileDTO updateProfileDTO)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString())
+                       ?? throw new NotFoundException("Usuario no encontrado.");
 
-    user.FirstName = updateProfileDTO.FirstName ?? user.FirstName;
-    user.LastName = updateProfileDTO.LastName ?? user.LastName;
-    user.PhoneNumber = updateProfileDTO.PhoneNumber ?? user.PhoneNumber;
+            user.FirstName = updateProfileDTO.FirstName ?? user.FirstName;
+            user.LastName = updateProfileDTO.LastName ?? user.LastName;
+            user.PhoneNumber = updateProfileDTO.PhoneNumber ?? user.PhoneNumber;
 
-    var result = await _userManager.UpdateAsync(user);
+            var result = await _userManager.UpdateAsync(user);
 
-    if (!result.Succeeded)
-        throw new AppException("Error al actualizar el perfil: " +
-            string.Join(", ", result.Errors.Select(e => e.Description)));
-}
+            if (!result.Succeeded)
+                throw new AppException("Error al actualizar el perfil: " +
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
 
+        public async Task<string> SendPasswordRecoveryCodeAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+                throw new NotFoundException("Usuario no encontrado.");
+
+            // Generar un código de verificación
+            var code = new Random().Next(100000, 999999).ToString();
+
+            // Guardar el código en la base de datos
+            var verificationCode = new VerificationCode
+            {
+                UserId = user.Id,
+                Code = code,
+                CodeType = CodeType.PasswordReset,
+                ExpiryDate = DateTime.UtcNow.AddMinutes(_verificationCodeExpirationTimeInMinutes)
+            };
+            await _verificationCodeRepository.CreateAsync(verificationCode);
+
+            // Enviar el código por correo
+            await _emailService.SendVerificationCodeEmailAsync(user.Email, code);
+
+            return "Código enviado al correo electrónico.";
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordDTO dto)
+        {
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
+            if (user == null)
+                throw new NotFoundException("Usuario no encontrado.");
+
+            // Validar el código
+            var verificationCode = await _verificationCodeRepository.GetLatestByUserIdAsync(user.Id, CodeType.PasswordReset);
+            if (verificationCode == null || verificationCode.Code != dto.Code || verificationCode.ExpiryDate < DateTime.UtcNow)
+                throw new BadRequestAppException("El código de recuperación es inválido o ha expirado.");
+
+            // Actualizar la contraseña
+            var result = await _userRepository.UpdatePasswordAsync(user, dto.NewPassword);
+            if (!result)
+                throw new InvalidOperationException("No se pudo actualizar la contraseña.");
+
+            // Eliminar el código de recuperación
+            await _verificationCodeRepository.DeleteByUserIdAsync(user.Id, CodeType.PasswordReset);
+        }
     }
 }

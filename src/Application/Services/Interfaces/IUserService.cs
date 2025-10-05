@@ -55,5 +55,7 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
 
         Task<UserProfileDTO> GetProfileAsync(int userId);
         Task UpdateProfileAsync(int userId, UpdateProfileDTO updateProfileDTO);
+        Task<string> SendPasswordRecoveryCodeAsync(string email);
+        Task ResetPasswordAsync(ResetPasswordDTO dto);
     }
 }

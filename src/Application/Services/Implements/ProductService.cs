@@ -88,9 +88,50 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con el producto encontrado o null si no se encuentra.</returns>
         public async Task<ProductDetailDTO> GetByIdAsync(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException($"Producto con ID {id} no encontrado.");
-            Log.Information("Producto encontrado: {@Product}", product);
-            return product.Adapt<ProductDetailDTO>();
+            // Consulta optimizada para cargar solo lo necesario
+            var product = await _productRepository.Query()
+                .Where(p => p.Id == id && p.IsAvailable) // Solo productos activos
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            // Si el producto no existe o no está activo, lanzar excepción 404
+            if (product == null)
+            {
+                throw new NotFoundException($"Producto con ID {id} no encontrado o no está disponible.");
+            }
+
+            // Mapear a DTO
+            return new ProductDetailDTO
+            {
+                Id = product.Id,
+                Title = product.Title,
+                Description = product.Description,
+                ImagesURL = product.Images?.Select(i => i.ImageUrl).ToList() ?? new List<string>(),
+                Price = product.Price.ToString("C0"), // Formato de precio como string (ejemplo: "$19,990")
+                Discount = product.Discount,
+                Stock = product.Stock,
+                StockIndicator = GetStockIndicator(product.Stock), // Indicador de stock
+                CategoryName = product.Category.Name,
+                BrandName = product.Brand.Name,
+                StatusName = product.IsAvailable ? "Activo" : "Inactivo",
+                IsAvailable = product.IsAvailable
+            };
+        }
+        
+        /// <summary>
+        /// Devuelve un indicador de stock basado en la cantidad disponible.
+        /// </summary>
+        /// <param name="stock">Cantidad de stock disponible.</param>
+        /// <returns>Indicador de stock como cadena.</returns>
+        private string GetStockIndicator(int stock)
+        {
+            if (stock == 0) return "Sin stock";
+            if (stock <= 10) return "Bajo";
+            if (stock <= 50) return "Medio";
+            return "Alto";
         }
 
         /// <summary>

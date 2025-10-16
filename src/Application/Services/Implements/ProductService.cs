@@ -1,4 +1,5 @@
 using Mapster;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TiendaProyecto.src.Application.DTO.ProductDTO;
 using TiendaProyecto.src.Application.DTO.ProductDTO.AdminDTO;
@@ -141,25 +142,93 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Una lista de productos filtrados para el cliente.</returns>
         public async Task<ListedProductsForCustomerDTO> GetFilteredForCustomerAsync(SearchParamsDTO searchParams)
         {
-            var (products, totalCount) = await _productRepository.GetFilteredForCustomerAsync(searchParams);
-            var totalPages = (int)Math.Ceiling((double)totalCount / (searchParams.PageSize ?? _defaultPageSize));
-            int currentPage = searchParams.PageNumber;
-            int pageSize = searchParams.PageSize ?? _defaultPageSize;
-            if (currentPage < 1 || currentPage > totalPages)
+
+            // Validaciones de entrada
+            if (searchParams.PageNumber < 1)
             {
-                throw new ArgumentOutOfRangeException("El número de página está fuera de rango.");
+                throw new BadRequestAppException("El número de página debe ser mayor o igual a 1.");
             }
+
+            if (searchParams.PageSize.HasValue && searchParams.PageSize > 50)
+            {
+                throw new BadRequestAppException("El tamaño de página no puede ser mayor a 50.");
+            }
+
+            if (searchParams.MinPrice.HasValue && searchParams.MaxPrice.HasValue && searchParams.MinPrice > searchParams.MaxPrice)
+            {
+                throw new BadRequestAppException("El precio mínimo no puede ser mayor que el precio máximo.");
+            }
+
+            // Construcción de la consulta
+            var query = _productRepository.Query()
+                .Where(p => p.IsAvailable) // Solo productos activos
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1)) // Carga solo la imagen principal
+                .AsNoTracking();
+
+            // Filtros
+            if (searchParams.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == searchParams.CategoryId);
+            }
+
+            if (searchParams.BrandId.HasValue)
+            {
+                query = query.Where(p => p.BrandId == searchParams.BrandId);
+            }
+
+            if (searchParams.MinPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= searchParams.MinPrice);
+            }
+
+            if (searchParams.MaxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= searchParams.MaxPrice);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+            {
+                var searchTerm = searchParams.SearchTerm.Trim().ToLower();
+                query = query.Where(p => p.Title.ToLower().Contains(searchTerm) || p.Description.ToLower().Contains(searchTerm));
+            }
+
+            // Ordenamiento
+            if (!string.IsNullOrWhiteSpace(searchParams.SortBy))
+            {
+                var allowedSortFields = new[] { "price", "createdAt", "title" };
+                if (!allowedSortFields.Contains(searchParams.SortBy.ToLower()))
+                {
+                    throw new BadRequestAppException("Campo de ordenamiento no permitido.");
+                }
+
+                query = searchParams.SortDirection?.ToLower() == "desc"
+                    ? query.OrderByDescending(p => EF.Property<object>(p, searchParams.SortBy))
+                    : query.OrderBy(p => EF.Property<object>(p, searchParams.SortBy));
+            }
+
+            // Total de productos
+            var totalCount = await query.CountAsync();
+
+            // Paginación
+            var pageSize = searchParams.PageSize ?? _defaultPageSize;
+            var currentPage = searchParams.PageNumber;
+            var products = await query
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             // Convertimos los productos filtrados a DTOs para la respuesta
             return new ListedProductsForCustomerDTO
             {
                 Products = products.Adapt<List<ProductForCustomerDTO>>(),
                 TotalCount = totalCount,
-                TotalPages = totalPages,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
                 CurrentPage = currentPage,
                 PageSize = pageSize
-            };
-        }
+                };
+                }
 
         /// <summary>
         /// Cambia el estado activo de un producto por su ID.
@@ -171,10 +240,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
         }
 
         public async Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams)
-    {
-        // Aquí puedes usar tu repositorio para contar los productos filtrados
-        return await _productRepository.CountFilteredAsync(searchParams);
-    }
+        {
+            // Aquí puedes usar tu repositorio para contar los productos filtrados
+            return await _productRepository.CountFilteredAsync(searchParams);
+        }
+        
 
     }
 }

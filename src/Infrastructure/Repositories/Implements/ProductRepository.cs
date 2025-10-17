@@ -216,15 +216,21 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         }
 
         public async Task<int> CountFilteredAsync(SearchParamsDTO searchParams)
-    {
-        var query = _context.Products.AsQueryable();
-
-        if (!string.IsNullOrEmpty(searchParams.SearchTerm))
         {
-            query = query.Where(p => p.Title.Contains(searchParams.SearchTerm));
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchParams.SearchTerm))
+            {
+                query = query.Where(p => p.Title.Contains(searchParams.SearchTerm));
+            }
+
+            return await query.CountAsync();
+        }
+    
+        public IQueryable<Product> Query()
+        {
+            return _context.Products.AsQueryable();
         }
 
-        return await query.CountAsync();
-    }
     }
 }

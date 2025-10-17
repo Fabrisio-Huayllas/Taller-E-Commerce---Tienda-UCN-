@@ -14,6 +14,8 @@ namespace TiendaProyecto.src.API.Controllers
     /// <summary>
     /// Controlador para manejar las operaciones relacionadas con los productos.
     /// </summary>
+    [Route("api/[controller]")]
+    [ApiController]
     public class ProductController : BaseController
     {
         /// <summary>
@@ -47,14 +49,7 @@ namespace TiendaProyecto.src.API.Controllers
             return Ok(new GenericResponse<ListedProductsForAdminDTO>("Productos obtenidos exitosamente", result));
         }
 
-        [HttpGet("customer/products")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAllForCustomerAsync([FromQuery] SearchParamsDTO searchParams)
-        {
-            var result = await _productService.GetFilteredForCustomerAsync(searchParams);
-            if (result == null || result.Products.Count == 0) { throw new KeyNotFoundException("No se encontraron productos."); }
-            return Ok(new GenericResponse<ListedProductsForCustomerDTO>("Productos obtenidos exitosamente", result));
-        }
+        
 
         /// <summary>
         /// Obtiene un producto específico para el cliente.
@@ -132,5 +127,17 @@ namespace TiendaProyecto.src.API.Controllers
             await _productService.ToggleActiveAsync(id);
             return Ok(new GenericResponse<string>("Estado del producto actualizado exitosamente", "El estado del producto ha sido cambiado."));
         }
+        [HttpGet("products")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllForCustomerAsync([FromQuery] SearchParamsDTO searchParams)
+        {
+            var result = await _productService.GetFilteredForCustomerAsync(searchParams);
+            if (result == null || result.Products.Count == 0)
+            {
+                throw new KeyNotFoundException("No se encontraron productos.");
+            }
+            return Ok(new GenericResponse<ListedProductsForCustomerDTO>("Productos obtenidos exitosamente", result));
+        }
+        
     }
 }

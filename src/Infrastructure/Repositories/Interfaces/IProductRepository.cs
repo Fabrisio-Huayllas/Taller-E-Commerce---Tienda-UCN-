@@ -79,5 +79,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         Task<Product?> GetByIdForAdminAsync(int id);
 
         Task<int> CountFilteredAsync(SearchParamsDTO searchParams);
+        IQueryable<Product> Query();
+
     }
 }

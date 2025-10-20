@@ -123,6 +123,7 @@ builder.Services.AddAuthentication(options =>
 //Mappers
 builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
+builder.Services.AddScoped<CartMapper>(); // ⭐ AGREGAR ESTA LÍNEA
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -137,6 +138,8 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 
 
@@ -225,13 +228,15 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<CorrelationMidware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
+
 // Activar Swagger solo en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<CartMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

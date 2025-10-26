@@ -54,13 +54,13 @@ namespace TiendaProyecto.src.Infrastructure.Data
                 if (!context.Categories.Any())
                 {
                     var categories = new List<Category>
-                            {
-                                new Category { Name = "Electronics" },
-                                new Category { Name = "Clothing" },
-                                new Category { Name = "Home Appliances" },
-                                new Category { Name = "Books" },
-                                new Category { Name = "Sports" }
-                            };
+                    {
+                        new Category { Name = "Electronics", Slug = "electronics" },
+                        new Category { Name = "Clothing", Slug = "clothing" },
+                        new Category { Name = "Home Appliances", Slug = "home-appliances" },
+                        new Category { Name = "Books", Slug = "books" },
+                        new Category { Name = "Sports", Slug = "sports" }
+                    };
                     await context.Categories.AddRangeAsync(categories);
                     await context.SaveChangesAsync();
                     Log.Information("Categorías creadas con éxito.");

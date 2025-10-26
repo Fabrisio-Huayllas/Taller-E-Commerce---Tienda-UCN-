@@ -70,11 +70,13 @@ namespace TiendaProyecto.src.Infrastructure.Data
                 if (!await context.Brands.AnyAsync())
                 {
                     var brands = new List<Brand>
-                        {
-                            new Brand { Name = "Sony" },
-                            new Brand { Name = "Apple" },
-                            new Brand { Name = "HP" }
-                        };
+                    {
+                        new Brand { Name = "Sony", Slug = "sony" },
+                        new Brand { Name = "Apple", Slug = "apple" },
+                        new Brand { Name = "HP", Slug = "hp" },
+                        new Brand { Name = "Samsung", Slug = "samsung" },
+                        new Brand { Name = "Nike", Slug = "nike" }
+                    };
                     await context.Brands.AddRangeAsync(brands);
                     await context.SaveChangesAsync();
                     Log.Information("Marcas creadas con éxito.");

@@ -61,15 +61,51 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con la categoría creada o encontrada.</returns>
         public async Task<Category> CreateOrGetCategoryAsync(string categoryName)
         {
-            var category = await _context.Categories
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == categoryName.ToLower());
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == categoryName);
 
-            if (category != null) { return category; }
-            category = new Category { Name = categoryName };
-            await _context.Categories.AddAsync(category);
+            if (category != null)
+            {
+                return category;
+            }
+
+            // Generar slug para la nueva categoría
+            var slug = GenerateSlug(categoryName);
+
+            // Verificar que el slug sea único
+            var counter = 1;
+            var originalSlug = slug;
+            while (await _context.Categories.AnyAsync(c => c.Slug == slug))
+            {
+                slug = $"{originalSlug}-{counter}";
+                counter++;
+            }
+
+            category = new Category
+            {
+                Name = categoryName,
+                Slug = slug
+            };
+
+            _context.Categories.Add(category);
             await _context.SaveChangesAsync();
             return category;
+        }
+
+        /// <summary>
+        /// Genera un slug normalizado a partir de un nombre.
+        /// </summary>
+        /// <param name="name">Nombre de la categoría</param>
+        /// <returns>Slug normalizado</returns>
+        private static string GenerateSlug(string name)
+        {
+            // Convertir a minúsculas
+            var slug = name.ToLowerInvariant();
+
+            // Reemplazar espacios y caracteres especiales con guiones
+            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[\s-]+", "-").Trim('-');
+
+            return slug;
         }
 
         /// <summary>
@@ -144,7 +180,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         }
 
         /// <summary>
-        /// Retorna una lista de productos para el cliente con los parámetros de búsqueda especificados.
+        /// Retorna una lista de productos para el cliente with los parámetros de búsqueda especificados.
         /// </summary>
         /// <param name="searchParams">Parámetros de búsqueda para filtrar los productos.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con una lista de productos para el cliente y el conteo total de productos.</returns>
@@ -226,7 +262,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 
             return await query.CountAsync();
         }
-    
+
         public IQueryable<Product> Query()
         {
             return _context.Products.AsQueryable();

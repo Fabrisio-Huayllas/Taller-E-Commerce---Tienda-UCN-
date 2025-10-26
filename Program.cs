@@ -123,7 +123,7 @@ builder.Services.AddAuthentication(options =>
 //Mappers
 builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
-builder.Services.AddScoped<CartMapper>(); // ⭐ AGREGAR ESTA LÍNEA
+builder.Services.AddScoped<CartMapper>();
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -140,7 +140,8 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartService, CartService>();
-
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 
 

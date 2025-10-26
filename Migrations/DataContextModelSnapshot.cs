@@ -2,20 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TiendaProyecto.src.Infrastructure.Data;
 
 #nullable disable
 
-namespace TiendaProyecto.src.Infrastructure.Data.Migrations
+namespace TiendaProyecto.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250919213845_InitialMigrate")]
-    partial class InitialMigrate
+    partial class DataContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -200,8 +197,21 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -613,7 +623,7 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("TiendaProyecto.src.Domain.Models.Category", "Category")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -635,6 +645,11 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
             modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Cart", b =>
                 {
                     b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Category", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Order", b =>

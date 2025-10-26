@@ -43,13 +43,32 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con la marca creada o encontrada.</returns>
         public async Task<Brand> CreateOrGetBrandAsync(string brandName)
         {
-            var brand = await _context.Brands
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Name.ToLower() == brandName.ToLower());
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Name == brandName);
 
-            if (brand != null) { return brand; }
-            brand = new Brand { Name = brandName };
-            await _context.Brands.AddAsync(brand);
+            if (brand != null)
+            {
+                return brand;
+            }
+
+            // Generar slug para la nueva marca
+            var slug = GenerateSlug(brandName);
+
+            // Verificar que el slug sea único
+            var counter = 1;
+            var originalSlug = slug;
+            while (await _context.Brands.AnyAsync(b => b.Slug == slug))
+            {
+                slug = $"{originalSlug}-{counter}";
+                counter++;
+            }
+
+            brand = new Brand
+            {
+                Name = brandName,
+                Slug = slug
+            };
+
+            _context.Brands.Add(brand);
             await _context.SaveChangesAsync();
             return brand;
         }

@@ -286,6 +286,42 @@ namespace TiendaProyecto.src.Application.Services.Implements
             return await _productRepository.CountFilteredAsync(searchParams);
         }
         
+        public async Task UpdateAsync(int id, UpdateProductDTO updateProductDTO)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+            }
+
+            // Actualizar los campos del producto
+            product.Title = updateProductDTO.Name;
+            product.Description = updateProductDTO.Description;
+            product.Price = updateProductDTO.Price;
+            product.Stock = updateProductDTO.Stock;
+            product.CategoryId = updateProductDTO.CategoryId;
+            product.BrandId = updateProductDTO.BrandId;
+
+            await _productRepository.UpdateAsync(product);
+        }
+        /// <summary>
+        /// Elimina lógicamente un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        public async Task DeleteAsync(int id)
+        {
+            var product = await _productRepository.GetByIdForAdminAsync(id);
+            if (product == null)
+            {
+                Log.Warning("Producto con ID {ProductId} no encontrado para eliminación", id);
+                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+            }
+
+            await _productRepository.SoftDeleteAsync(id);
+            Log.Information("Producto con ID {ProductId} eliminado lógicamente exitosamente", id);
+        }
+
 
     }
 }

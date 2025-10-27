@@ -81,5 +81,16 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         Task<int> CountFilteredAsync(SearchParamsDTO searchParams);
         IQueryable<Product> Query();
 
+        Task UpdateAsync(Product product);
+
+        // <summary>
+        /// Realiza una eliminación lógica de un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar lógicamente.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task SoftDeleteAsync(int id);
+
+
+
     }
 }

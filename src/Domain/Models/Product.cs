@@ -79,6 +79,17 @@ namespace TiendaProyecto.src.Domain.Models
         public ICollection<Image> Images { get; set; } = new List<Image>();
 
         /// <summary>
+        /// Indica si el producto ha sido eliminado lógicamente.
+        /// </summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>
+        /// Fecha y hora en que el producto fue eliminado lógicamente.
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+
+        /// <summary>
         /// Fecha de creación del producto.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

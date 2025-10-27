@@ -50,8 +50,15 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         Task ToggleActiveAsync(int id);
 
         Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams);
+
+        Task UpdateAsync(int id, UpdateProductDTO updateProductDTO);
          
-         
+         /// <summary>
+        /// Elimina lógicamente un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task DeleteAsync(int id);
     }
 
 }

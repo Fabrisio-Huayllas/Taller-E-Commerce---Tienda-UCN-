@@ -136,7 +136,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             return await _context.Products.
                                         AsNoTracking().
-                                        Where(p => p.Id == id && p.IsAvailable).
+                                        Where(p => p.Id == id && p.IsAvailable&& !p.IsDeleted).
                                         Include(p => p.Category).
                                         Include(p => p.Brand).
                                         Include(p => p.Images)
@@ -152,7 +152,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             return await _context.Products.
                                         AsNoTracking().
-                                        Where(p => p.Id == id).
+                                        Where(p => p.Id == id&& !p.IsDeleted).
                                         Include(p => p.Category).
                                         Include(p => p.Brand).
                                         Include(p => p.Images)
@@ -167,6 +167,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         public async Task<(IEnumerable<Product> products, int totalCount)> GetFilteredForAdminAsync(SearchParamsDTO searchParams)
         {
             var query = _context.Products
+                .Where(p => !p.IsDeleted) 
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1)) // Cargamos la URL de la imagen principal a la hora de crear el producto
@@ -206,7 +207,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         public async Task<(IEnumerable<Product> products, int totalCount)> GetFilteredForCustomerAsync(SearchParamsDTO searchParams)
         {
             var query = _context.Products
-                .Where(p => p.IsAvailable)
+                .Where(p => p.IsAvailable && !p.IsDeleted)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1))
@@ -245,7 +246,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con el stock real del producto.</returns>
         public async Task<int> GetRealStockAsync(int productId)
         {
-            return await _context.Products.AsNoTracking().Where(p => p.Id == productId).Select(p => p.Stock).FirstOrDefaultAsync();
+            return await _context.Products.AsNoTracking().Where(p => p.Id == productId && !p.IsDeleted).Select(p => p.Stock).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -272,7 +273,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 
         public async Task<int> CountFilteredAsync(SearchParamsDTO searchParams)
         {
-            var query = _context.Products.AsQueryable();
+            var query = _context.Products.Where(p => !p.IsDeleted);
 
             if (!string.IsNullOrEmpty(searchParams.SearchTerm))
             {
@@ -284,8 +285,22 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 
         public IQueryable<Product> Query()
         {
-            return _context.Products.AsQueryable();
+            return _context.Products.Where(p => !p.IsDeleted);
         }
+        public async Task UpdateAsync(Product product)
+        {
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+        }
+        public async Task SoftDeleteAsync(int id)
+    {
+        await _context.Products
+            .Where(p => p.Id == id && !p.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(p => p.IsDeleted, true)
+                .SetProperty(p => p.DeletedAt, DateTime.UtcNow)
+                .SetProperty(p => p.IsAvailable, false));
+    }
 
     }
 }

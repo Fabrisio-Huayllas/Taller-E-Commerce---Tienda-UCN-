@@ -138,6 +138,45 @@ namespace TiendaProyecto.src.API.Controllers
             }
             return Ok(new GenericResponse<ListedProductsForCustomerDTO>("Productos obtenidos exitosamente", result));
         }
+
+        [HttpPut("admin/products/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateAsync(int id, [FromBody] UpdateProductDTO updateProductDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new GenericResponse<string>("Error en la validación de los datos.", null));
+            }
+
+            try
+            {
+                await _productService.UpdateAsync(id, updateProductDTO);
+                return Ok(new GenericResponse<string>("Producto actualizado exitosamente.", null));
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new GenericResponse<string>(ex.Message, null));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new GenericResponse<string>("Error interno del servidor.", null));
+            }
+        }
+        
+        /// <summary>
+        /// Elimina lógicamente un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar.</param>
+        /// <returns>Una respuesta indicando el resultado de la operación.</returns>
+        [HttpDelete("admin/products/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            await _productService.DeleteAsync(id);
+            return NoContent(); // 204 No Content
+        }
+
+
         
     }
 }

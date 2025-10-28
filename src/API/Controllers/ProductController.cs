@@ -162,7 +162,7 @@ namespace TiendaProyecto.src.API.Controllers
                 return StatusCode(500, new GenericResponse<string>("Error interno del servidor.", null));
             }
         }
-        
+
         /// <summary>
         /// Elimina lógicamente un producto por su ID.
         /// </summary>
@@ -174,6 +174,48 @@ namespace TiendaProyecto.src.API.Controllers
         {
             await _productService.DeleteAsync(id);
             return NoContent(); // 204 No Content
+        }
+
+        /// <summary>
+        /// Sube una o más imágenes para un producto.
+        /// </summary>
+        /// <param name="id">El ID del producto.</param>
+        /// <param name="files">Los archivos de imagen a subir.</param>
+        /// <returns>Una respuesta con las URLs de las imágenes subidas.</returns>
+        [HttpPost("{id}/images")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UploadImagesAsync(int id, [FromForm] List<IFormFile> files)
+        {
+            if (files == null || files.Count == 0)
+            {
+                return BadRequest(new { message = "No se proporcionaron archivos" });
+            }
+
+            var images = await _productService.AddImagesAsync(id, files);
+            
+            return Ok(new 
+            { 
+                message = $"{images.Count} imagen(es) subida(s) exitosamente",
+                images = images.Select(i => new 
+                {
+                    id = i.Id,
+                    url = i.ImageUrl,
+                    publicId = i.PublicId
+                })
+            });
+        }
+        
+        /// <summary>
+        /// Elimina una imagen de un producto.
+        /// </summary>
+        /// <param name="id">El ID del producto.</param>
+        /// <param name="imageId">El ID de la imagen a eliminar.</param>
+        [HttpDelete("{id}/images/{imageId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteImageAsync(int id, int imageId)
+        {
+            await _productService.DeleteImageAsync(id, imageId);
+            return NoContent();
         }
 
 

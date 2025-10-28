@@ -293,14 +293,52 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             await _context.SaveChangesAsync();
         }
         public async Task SoftDeleteAsync(int id)
-    {
-        await _context.Products
-            .Where(p => p.Id == id && !p.IsDeleted)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(p => p.IsDeleted, true)
-                .SetProperty(p => p.DeletedAt, DateTime.UtcNow)
-                .SetProperty(p => p.IsAvailable, false));
-    }
+        {
+            await _context.Products
+                .Where(p => p.Id == id && !p.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(p => p.IsDeleted, true)
+                    .SetProperty(p => p.DeletedAt, DateTime.UtcNow)
+                    .SetProperty(p => p.IsAvailable, false));
+        }
+        /// <summary>
+        /// Agrega imágenes a la base de datos (R92).
+        /// </summary>
+        public async Task AddImagesAsync(List<Image> images)
+        {
+            await _context.Images.AddRangeAsync(images);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Obtiene una imagen por su ID.
+        /// </summary>
+        public async Task<Image?> GetImageByIdAsync(int imageId)
+        {
+            return await _context.Images
+                .FirstOrDefaultAsync(i => i.Id == imageId);
+        }
+
+        /// <summary>
+        /// Elimina una imagen de la base de datos (R93).
+        /// </summary>
+        public async Task DeleteImageAsync(int imageId)
+        {
+            await _context.Images
+                .Where(i => i.Id == imageId)
+                .ExecuteDeleteAsync();
+        }
+
+        /// <summary>
+        /// Obtiene todas las imágenes de un producto.
+        /// </summary>
+        public async Task<List<Image>> GetProductImagesAsync(int productId)
+        {
+            return await _context.Images
+                .Where(i => i.ProductId == productId)
+                .OrderBy(i => i.CreatedAt)
+                .ToListAsync();
+        }
 
     }
 }

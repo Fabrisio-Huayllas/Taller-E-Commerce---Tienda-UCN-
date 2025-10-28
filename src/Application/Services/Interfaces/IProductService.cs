@@ -52,13 +52,24 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams);
 
         Task UpdateAsync(int id, UpdateProductDTO updateProductDTO);
-         
-         /// <summary>
+
+        /// <summary>
         /// Elimina lógicamente un producto por su ID.
         /// </summary>
         /// <param name="id">El ID del producto a eliminar.</param>
         /// <returns>Una tarea que representa la operación asíncrona.</returns>
         Task DeleteAsync(int id);
+        
+        /// <summary>
+        /// Agrega imágenes a un producto.
+        /// </summary>
+        Task<List<Image>> AddImagesAsync(int productId, List<IFormFile> files);
+
+        /// <summary>
+        /// Elimina una imagen de un producto.
+        /// </summary>
+        Task DeleteImageAsync(int productId, int imageId);
+
     }
 
 }

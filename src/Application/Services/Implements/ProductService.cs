@@ -16,15 +16,18 @@ namespace TiendaProyecto.src.Application.Services.Implements
         private readonly IProductRepository _productRepository;
         private readonly IConfiguration _configuration;
         private readonly IFileService _fileService;
+        private readonly IImageService _imageService;
 
         private readonly int _defaultPageSize;
 
-        public ProductService(IProductRepository productRepository, IConfiguration configuration, IFileService fileService)
+        public ProductService(IProductRepository productRepository, IConfiguration configuration, IFileService fileService,IImageService imageService)
         {
             _productRepository = productRepository;
             _configuration = configuration;
             _fileService = fileService;
+            _imageService = imageService;
             _defaultPageSize = int.Parse(_configuration["Products:DefaultPageSize"] ?? throw new InvalidOperationException("La configuración 'DefaultPageSize' no está definida."));
+            
         }
 
         /// <summary>
@@ -310,17 +313,166 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <param name="id">El ID del producto a eliminar.</param>
         /// <returns>Una tarea que representa la operación asíncrona.</returns>
         public async Task DeleteAsync(int id)
+{
+    var product = await _productRepository.GetByIdForAdminAsync(id);
+    if (product == null)
+    {
+        Log.Warning("Producto con ID {ProductId} no encontrado para eliminación", id);
+        throw new NotFoundException($"Producto con ID {id} no encontrado.");
+    }
+
+    // R94: Obtener imágenes ANTES de soft delete
+    var images = await _productRepository.GetProductImagesAsync(id);
+    
+    Log.Information("Producto {ProductId} tiene {ImageCount} imágenes para eliminar", id, images.Count);
+    
+    // 1. PRIMERO: Eliminar imágenes de Cloudinary y BD
+    if (images.Count > 0)
+    {
+        foreach (var image in images)
         {
-            var product = await _productRepository.GetByIdForAdminAsync(id);
+            try
+            {
+                // Eliminar de Cloudinary
+                await _imageService.DeleteImageAsync(image.PublicId);
+                Log.Information("Imagen {ImageId} ({PublicId}) eliminada de Cloudinary", 
+                    image.Id, image.PublicId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error al eliminar imagen {ImageId} de Cloudinary", image.Id);
+            }
+        }
+        
+        // Eliminar físicamente TODAS las imágenes de la BD
+        foreach (var image in images)
+        {
+            await _productRepository.DeleteImageAsync(image.Id);
+        }
+        
+        Log.Information("Todas las {Count} imágenes del producto {ProductId} eliminadas de BD", 
+            images.Count, id);
+    }
+
+    // 2. DESPUÉS: Soft delete del producto
+    await _productRepository.SoftDeleteAsync(id);
+    
+    Log.Information("Producto con ID {ProductId} eliminado lógicamente. Total de imágenes eliminadas: {ImageCount}", 
+        id, images.Count);
+}
+
+        /// <summary>
+        /// Agrega imágenes a un producto (R91, R92).
+        /// </summary>
+        public async Task<List<Image>> AddImagesAsync(int productId, List<IFormFile> files)
+        {
+            // Validar que el producto existe
+            var product = await _productRepository.GetByIdForAdminAsync(productId);
             if (product == null)
             {
-                Log.Warning("Producto con ID {ProductId} no encontrado para eliminación", id);
-                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+                Log.Warning("Producto con ID {ProductId} no encontrado para agregar imágenes", productId);
+                throw new NotFoundException($"Producto con ID {productId} no encontrado");
             }
 
-            await _productRepository.SoftDeleteAsync(id);
-            Log.Information("Producto con ID {ProductId} eliminado lógicamente exitosamente", id);
+            // Validar que se proporcionaron archivos
+            if (files == null || files.Count == 0)
+            {
+                throw new BadRequestAppException("No se proporcionaron archivos de imagen");
+            }
+
+            // Validar límite de imágenes (opcional, ajusta según necesites)
+            const int maxImages = 10;
+            var currentImagesCount = await _productRepository.GetProductImagesAsync(productId);
+            if (currentImagesCount.Count + files.Count > maxImages)
+            {
+                throw new BadRequestAppException($"El producto no puede tener más de {maxImages} imágenes");
+            }
+
+            var images = new List<Image>();
+
+            try
+            {
+                foreach (var file in files)
+                {
+                    // Subir imagen a Cloudinary
+                    var (url, publicId) = await _imageService.UploadImageAsync(file);
+
+                    // Crear registro de imagen
+                    var image = new Image
+                    {
+                        ImageUrl = url,
+                        PublicId = publicId,
+                        ProductId = productId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    images.Add(image);
+                }
+
+                // Guardar en la base de datos
+                await _productRepository.AddImagesAsync(images);
+
+                Log.Information("{Count} imágenes agregadas exitosamente al producto {ProductId}", 
+                    images.Count, productId);
+
+                return images;
+            }
+            catch (Exception ex)
+            {
+                // Si algo falla, intentar eliminar las imágenes que se subieron a Cloudinary
+                Log.Error(ex, "Error al agregar imágenes al producto {ProductId}. Limpiando...", productId);
+                
+                foreach (var image in images.Where(i => !string.IsNullOrEmpty(i.PublicId)))
+                {
+                    try
+                    {
+                        await _imageService.DeleteImageAsync(image.PublicId);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Log.Error(cleanupEx, "Error al limpiar imagen {PublicId}", image.PublicId);
+                    }
+                }
+
+                throw;
+            }
         }
+
+        /// <summary>
+        /// Elimina una imagen de un producto (R93, R94).
+        /// </summary>
+        public async Task DeleteImageAsync(int productId, int imageId)
+        {
+            // Obtener la imagen
+            var image = await _productRepository.GetImageByIdAsync(imageId);
+
+            // Validar que existe y pertenece al producto
+            if (image == null || image.ProductId != productId)
+            {
+                Log.Warning("Imagen {ImageId} no encontrada o no pertenece al producto {ProductId}", 
+                    imageId, productId);
+                throw new NotFoundException("Imagen no encontrada");
+            }
+
+            try
+            {
+                // Eliminar de Cloudinary primero
+                await _imageService.DeleteImageAsync(image.PublicId);
+
+                // Eliminar de la base de datos
+                await _productRepository.DeleteImageAsync(imageId);
+
+                Log.Information("Imagen {ImageId} eliminada exitosamente del producto {ProductId}", 
+                    imageId, productId);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error al eliminar imagen {ImageId} del producto {ProductId}", 
+                    imageId, productId);
+                throw;
+            }
+        }
+
 
 
     }

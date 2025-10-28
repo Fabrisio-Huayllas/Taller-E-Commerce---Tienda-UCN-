@@ -67,5 +67,8 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO.CustomerDTO
         /// Indica si el producto está disponible para la venta.
         /// </summary>
         public required bool IsAvailable { get; set; }
+
+        public String FinalPrice { get; set; }
+        
     }
 }

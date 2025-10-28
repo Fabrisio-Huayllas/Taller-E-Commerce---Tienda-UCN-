@@ -33,5 +33,8 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// <param name="searchParams">Los parámetros de búsqueda.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con una lista de órdenes y el conteo total de órdenes.</returns>
         Task<(IEnumerable<Order> orders, int totalCount)> GetByUserIdAsync(SearchParamsDTO searchParams, int userId);
+    
+        
+    
     }
 }

@@ -75,6 +75,7 @@ builder.Services.AddControllers()
 #region Email Service Configuration
 Log.Information("Configurando servicio de Email");
 builder.Services.AddOptions();
+builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
 {

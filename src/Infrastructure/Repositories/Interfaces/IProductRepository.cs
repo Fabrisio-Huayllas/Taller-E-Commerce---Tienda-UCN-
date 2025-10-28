@@ -90,6 +90,27 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// <returns>Una tarea que representa la operación asíncrona.</returns>
         Task SoftDeleteAsync(int id);
 
+        /// <summary>
+        /// Agrega imágenes a la base de datos.
+        /// </summary>
+        Task AddImagesAsync(List<Image> images);
+
+        /// <summary>
+        /// Obtiene una imagen por su ID.
+        /// </summary>
+        Task<Image?> GetImageByIdAsync(int imageId);
+
+        /// <summary>
+        /// Elimina una imagen de la base de datos.
+        /// </summary>
+        Task DeleteImageAsync(int imageId);
+
+        /// <summary>
+        /// Obtiene todas las imágenes de un producto.
+        /// </summary>
+        Task<List<Image>> GetProductImagesAsync(int productId);
+
+
 
 
     }

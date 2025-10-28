@@ -37,6 +37,7 @@ namespace TiendaProyecto.src.Application.Mappers
                 .Map(dest => dest.ImagesURL, src => src.Images.Count() != 0 ? src.Images.Select(i => i.ImageUrl).ToList() : new List<string> { _defaultImageURL! })
                 .Map(dest => dest.Price, src => src.Price.ToString("C"))
                 .Map(dest => dest.Discount, src => src.Discount)
+                .Map(dest => dest.FinalPrice, src => src.FinalPrice.ToString("C"))
                 .Map(dest => dest.Stock, src => src.Stock)
                 .Map(dest => dest.StockIndicator, src => GetStockIndicator(src.Stock))
                 .Map(dest => dest.CategoryName, src => src.Category.Name)
@@ -45,16 +46,25 @@ namespace TiendaProyecto.src.Application.Mappers
                 .Map(dest => dest.IsAvailable, src => src.IsAvailable);
 
             TypeAdapterConfig<Product, ProductForCustomerDTO>.NewConfig()
+                .Map(dest => dest.Id, src => src.Id)
                 .Map(dest => dest.Title, src => src.Title)
                 .Map(dest => dest.Description, src => src.Description)
-                .Map(dest => dest.MainImageURL, src => src.Images.FirstOrDefault() != null ? src.Images.First().ImageUrl : _defaultImageURL)
+                .Map(dest => dest.ImagesURL, src => src.Images.Count() != 0 ? src.Images.Select(i => i.ImageUrl).ToList() : new List<string> { _defaultImageURL! })
                 .Map(dest => dest.Price, src => src.Price.ToString("C"))
-                .Map(dest => dest.Discount, src => src.Discount);
+                .Map(dest => dest.Discount, src => src.Discount)
+                .Map(dest => dest.FinalPrice, src => src.FinalPrice.ToString("C"))
+                .Map(dest => dest.Stock, src => src.Stock)
+                .Map(dest => dest.StockIndicator, src => GetStockIndicator(src.Stock))
+                .Map(dest => dest.CategoryName, src => src.Category.Name)
+                .Map(dest => dest.BrandName, src => src.Brand.Name)
+                .Map(dest => dest.StatusName, src => src.Status)
+                .Map(dest => dest.IsAvailable, src => src.IsAvailable);
 
             TypeAdapterConfig<Product, ProductForAdminDTO>.NewConfig()
                 .Map(dest => dest.Title, src => src.Title)
                 .Map(dest => dest.MainImageURL, src => src.Images.FirstOrDefault() != null ? src.Images.First().ImageUrl : _defaultImageURL)
                 .Map(dest => dest.Price, src => src.Price.ToString("C"))
+                .Map(dest => dest.FinalPrice, src => src.FinalPrice.ToString("C"))
                 .Map(dest => dest.Stock, src => src.Stock)
                 .Map(dest => dest.StockIndicator, src => GetStockIndicator(src.Stock))
                 .Map(dest => dest.CategoryName, src => src.Category.Name)

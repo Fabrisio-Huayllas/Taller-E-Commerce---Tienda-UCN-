@@ -60,10 +60,24 @@ namespace TiendaProyecto.src.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetByIdForCustomerAsync(int id)
         {
-            var result = await _productService.GetByIdAsync(id);
-            if (result == null) { throw new KeyNotFoundException("Producto no encontrado."); }
-            return Ok(new GenericResponse<ProductDetailDTO>("Producto obtenido exitosamente", result));
-        }
+            try
+            {
+                var result = await _productService.GetByIdForCustomerAsync(id); // Cambiar GetByIdAsync por GetByIdForCustomerAsync
+                return Ok(new GenericResponse<ProductForCustomerDTO>("Producto obtenido exitosamente", result)); // Cambiar ProductDetailDTO por ProductForCustomerDTO
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new GenericResponse<string>(ex.Message, null));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new GenericResponse<string>(ex.Message, null));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new GenericResponse<string>("Error interno del servidor.", null));
+            }
+    }
 
         /// <summary>
         /// Obtiene un producto específico para el admin.
@@ -204,7 +218,7 @@ namespace TiendaProyecto.src.API.Controllers
                 })
             });
         }
-        
+
         /// <summary>
         /// Elimina una imagen de un producto.
         /// </summary>
@@ -218,6 +232,29 @@ namespace TiendaProyecto.src.API.Controllers
             return NoContent();
         }
 
+        [HttpPatch("admin/products/{id}/discount")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateDiscountAsync(int id, [FromBody] ProductDiscountUpdateDTO discountDto)
+        {
+            if (discountDto.DiscountPercent < 0 || discountDto.DiscountPercent > 100)
+            {
+                return BadRequest(new GenericResponse<string>("El porcentaje de descuento debe estar entre 0 y 100.", null));
+            }
+
+            try
+            {
+                await _productService.UpdateDiscountAsync(id, discountDto);
+                return Ok(new GenericResponse<string>("Descuento actualizado exitosamente.", null));
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new GenericResponse<string>(ex.Message, null));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new GenericResponse<string>("Error interno del servidor.", null));
+            }
+        }
 
         
     }

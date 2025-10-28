@@ -59,5 +59,6 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO.AdminDTO
         /// Fecha y hora de la última actualización del producto.
         /// </summary>
         public required DateTime UpdatedAt { get; set; }
+        public String FinalPrice { get; set; }
     }
 }

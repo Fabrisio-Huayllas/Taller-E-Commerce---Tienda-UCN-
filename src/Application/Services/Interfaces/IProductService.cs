@@ -70,6 +70,14 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         Task DeleteImageAsync(int productId, int imageId);
 
+        /// <summary>
+        /// Actualiza el descuento de un producto.
+        /// </summary>
+        /// <param name="id">ID del producto.</param>
+        /// <param name="discountDto">DTO con el porcentaje de descuento.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task UpdateDiscountAsync(int id, ProductDiscountUpdateDTO discountDto);
+        Task<ProductForCustomerDTO> GetByIdForCustomerAsync(int id);
     }
 
 }

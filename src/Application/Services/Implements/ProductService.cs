@@ -449,7 +449,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
             // Validar que existe y pertenece al producto
             if (image == null || image.ProductId != productId)
             {
-                Log.Warning("Imagen {ImageId} no encontrada o no pertenece al producto {ProductId}", 
+                Log.Warning("Imagen {ImageId} no encontrada o no pertenece al producto {ProductId}",
                     imageId, productId);
                 throw new NotFoundException("Imagen no encontrada");
             }
@@ -462,15 +462,40 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 // Eliminar de la base de datos
                 await _productRepository.DeleteImageAsync(imageId);
 
-                Log.Information("Imagen {ImageId} eliminada exitosamente del producto {ProductId}", 
+                Log.Information("Imagen {ImageId} eliminada exitosamente del producto {ProductId}",
                     imageId, productId);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error al eliminar imagen {ImageId} del producto {ProductId}", 
+                Log.Error(ex, "Error al eliminar imagen {ImageId} del producto {ProductId}",
                     imageId, productId);
                 throw;
             }
+        }
+        public async Task UpdateDiscountAsync(int id, ProductDiscountUpdateDTO discountDto)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+            }
+
+            product.Discount = discountDto.DiscountPercent;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await _productRepository.UpdateAsync(product);
+
+            Log.Information("Descuento del producto con ID {ProductId} actualizado a {DiscountPercent}%.", id, discountDto.DiscountPercent);
+        }
+        public async Task<ProductForCustomerDTO> GetByIdForCustomerAsync(int id)
+        {
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null)
+            {
+                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+            }
+
+            return product.Adapt<ProductForCustomerDTO>();
         }
 
 

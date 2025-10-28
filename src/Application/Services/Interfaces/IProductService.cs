@@ -27,7 +27,7 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         /// <param name="id">El ID del producto a buscar.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con el producto encontrado o null si no se encuentra.</returns>
-        Task<ProductDetailDTO> GetByIdAsync(int id);
+        ///Task<ProductDetailDTO> GetByIdAsync(int id);
 
         /// <summary>
         /// Retorna un producto específico por su ID desde el punto de vista de un admin.

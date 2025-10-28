@@ -89,7 +89,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// </summary>
         /// <param name="id">El ID del producto a buscar.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con el producto encontrado o null si no se encuentra.</returns>
-        public async Task<ProductDetailDTO> GetByIdAsync(int id)
+        /*public async Task<ProductDetailDTO> GetByIdAsync(int id)
         {
             // Consulta optimizada para cargar solo lo necesario
             var product = await _productRepository.Query()
@@ -121,8 +121,9 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 BrandName = product.Brand.Name,
                 StatusName = product.IsAvailable ? "Activo" : "Inactivo",
                 IsAvailable = product.IsAvailable
+                
             };
-        }
+        }*/
         
         /// <summary>
         /// Devuelve un indicador de stock basado en la cantidad disponible.
@@ -291,7 +292,15 @@ namespace TiendaProyecto.src.Application.Services.Implements
         
         public async Task UpdateAsync(int id, UpdateProductDTO updateProductDTO)
         {
-            var product = await _productRepository.GetByIdAsync(id);
+            // Realizar la consulta directamente al repositorio
+            var product = await _productRepository.Query()
+                .Where(p => p.Id == id) // Buscar por ID
+                .Include(p => p.Category) // Incluir la categoría
+                .Include(p => p.Brand) // Incluir la marca
+                .AsNoTracking() // Evitar el seguimiento de cambios
+                .FirstOrDefaultAsync();
+
+            // Validar si el producto no existe
             if (product == null)
             {
                 throw new NotFoundException($"Producto con ID {id} no encontrado.");
@@ -305,7 +314,9 @@ namespace TiendaProyecto.src.Application.Services.Implements
             product.CategoryId = updateProductDTO.CategoryId;
             product.BrandId = updateProductDTO.BrandId;
 
+            // Guardar los cambios
             await _productRepository.UpdateAsync(product);
+
         }
         /// <summary>
         /// Elimina lógicamente un producto por su ID.
@@ -474,25 +485,41 @@ namespace TiendaProyecto.src.Application.Services.Implements
         }
         public async Task UpdateDiscountAsync(int id, ProductDiscountUpdateDTO discountDto)
         {
-            var product = await _productRepository.GetByIdAsync(id);
+            // Realizar la consulta directamente al repositorio
+            var product = await _productRepository.Query()
+                .Where(p => p.Id == id) // Buscar por ID
+                .AsNoTracking() // Evitar el seguimiento de cambios
+                .FirstOrDefaultAsync();
+
+            // Validar si el producto no existe
             if (product == null)
             {
                 throw new NotFoundException($"Producto con ID {id} no encontrado.");
             }
 
+            // Actualizar el descuento y la fecha de actualización
             product.Discount = discountDto.DiscountPercent;
             product.UpdatedAt = DateTime.UtcNow;
 
+            // Guardar los cambios
             await _productRepository.UpdateAsync(product);
 
+            // Registrar la operación
             Log.Information("Descuento del producto con ID {ProductId} actualizado a {DiscountPercent}%.", id, discountDto.DiscountPercent);
         }
         public async Task<ProductForCustomerDTO> GetByIdForCustomerAsync(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productRepository.Query()
+            .Where(p => p.Id == id && p.IsAvailable) // Solo productos activos
+            .Include(p => p.Brand)
+            .Include(p => p.Category)
+            .Include(p => p.Images)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
             if (product == null)
             {
-                throw new NotFoundException($"Producto con ID {id} no encontrado.");
+                throw new NotFoundException($"Producto con ID {id} no encontrado o no está disponible.");
             }
 
             return product.Adapt<ProductForCustomerDTO>();

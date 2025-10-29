@@ -80,18 +80,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 throw new ConflictException($"Ya existe una marca con el nombre '{sanitizedName}'.");
             }
 
-            // Generar slug único
-            var slug = await _brandRepository.GenerateUniqueSlugAsync(sanitizedName);
-
-            var brand = new Brand
-            {
-                Name = sanitizedName,
-                Slug = slug,
-                Description = sanitizedDescription,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            // Crear marca usando mapper y luego establecer campos específicos
+            var brand = createDto.Adapt<Brand>();
+            brand.Name = sanitizedName;
+            brand.Description = sanitizedDescription;
+            brand.Slug = await _brandRepository.GenerateUniqueSlugAsync(sanitizedName);
 
             var createdBrand = await _brandRepository.CreateAsync(brand);
             Log.Information("Marca creada: {@Brand}", createdBrand);

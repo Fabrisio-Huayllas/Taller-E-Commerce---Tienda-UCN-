@@ -125,6 +125,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
 builder.Services.AddScoped<CartMapper>();
+builder.Services.AddScoped<CategoryMapper>();
+builder.Services.AddScoped<BrandMapper>();
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();

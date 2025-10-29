@@ -85,18 +85,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 throw new ConflictException($"Ya existe una categoría con el nombre '{sanitizedName}'.");
             }
 
-            // Generar slug único
-            var slug = await _categoryRepository.GenerateUniqueSlugAsync(sanitizedName);
-
-            var category = new Category
-            {
-                Name = sanitizedName,
-                Slug = slug,
-                Description = sanitizedDescription,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            // Crear categoría usando mapper y luego establecer campos específicos
+            var category = createDto.Adapt<Category>();
+            category.Name = sanitizedName;
+            category.Description = sanitizedDescription;
+            category.Slug = await _categoryRepository.GenerateUniqueSlugAsync(sanitizedName);
 
             var createdCategory = await _categoryRepository.CreateAsync(category);
             Log.Information("Categoría creada: {@Category}", createdCategory);

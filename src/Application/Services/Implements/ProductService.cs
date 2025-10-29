@@ -38,39 +38,59 @@ namespace TiendaProyecto.src.Application.Services.Implements
         public async Task<string> CreateAsync(CreateProductDTO createProductDTO)
         {
             // Validar los datos del producto
-    if (string.IsNullOrWhiteSpace(createProductDTO.Title))
-    {
-        throw new BadRequestAppException("El nombre del producto es obligatorio.");
-    }
+            if (string.IsNullOrWhiteSpace(createProductDTO.Title))
+            {
+                throw new BadRequestAppException("El nombre del producto es obligatorio.");
+            }
 
-    if (createProductDTO.Price <= 0)
-    {
-        throw new BadRequestAppException("El precio del producto debe ser mayor a 0.");
-    }
+            if (createProductDTO.Price <= 0)
+            {
+                throw new BadRequestAppException("El precio del producto debe ser mayor a 0.");
+            }
 
-    if (createProductDTO.Stock < 0)
-    {
-        throw new BadRequestAppException("El stock del producto no puede ser negativo.");
-    }
+            if (createProductDTO.Stock < 0)
+            {
+                throw new BadRequestAppException("El stock del producto no puede ser negativo.");
+            }
 
-    if (createProductDTO.CategoryName == null)
-    {
-        throw new BadRequestAppException("La categoría del producto es obligatoria.");
-    }
+            if (createProductDTO.CategoryId <= 0)
+            {
+                throw new BadRequestAppException("El ID de la categoría es obligatorio y debe ser mayor a 0.");
+            }
 
-    if (createProductDTO.Images == null || !createProductDTO.Images.Any())
-    {
-        throw new BadRequestAppException("Debe proporcionar al menos una imagen para el producto.");
-    }
+            if (createProductDTO.BrandId <= 0)
+            {
+                throw new BadRequestAppException("El ID de la marca es obligatorio y debe ser mayor a 0.");
+            }
 
+            if (createProductDTO.Images == null || !createProductDTO.Images.Any())
+            {
+                throw new BadRequestAppException("Debe proporcionar al menos una imagen para el producto.");
+            }
+
+            // Validar existencia de la categoría
+            var category = await _productRepository.GetCategoryByIdAsync(createProductDTO.CategoryId);
+            if (category == null)
+            {
+                throw new NotFoundException($"La categoría con ID {createProductDTO.CategoryId} no existe.");
+            }
+
+            // Validar existencia de la marca
+            var brand = await _productRepository.GetBrandByIdAsync(createProductDTO.BrandId);
+            if (brand == null)
+            {
+                throw new NotFoundException($"La marca con ID {createProductDTO.BrandId} no existe.");
+            }
+
+            // Crear el producto
             Product product = createProductDTO.Adapt<Product>();
-            Category category = await _productRepository.CreateOrGetCategoryAsync(createProductDTO.CategoryName) ?? throw new Exception("Error al crear o obtener la categoría del producto.");
-            Brand brand = await _productRepository.CreateOrGetBrandAsync(createProductDTO.BrandName) ?? throw new Exception("Error al crear o obtener la marca del producto.");
-            product.CategoryId = category.Id;
-            product.BrandId = brand.Id;
+            product.CategoryId = createProductDTO.CategoryId;
+            product.BrandId = createProductDTO.BrandId;
             product.Images = new List<Image>();
+
             int productId = await _productRepository.CreateAsync(product);
             Log.Information("Producto creado: {@Product}", product);
+            
             if (createProductDTO.Images == null || !createProductDTO.Images.Any())
             {
                 Log.Information("No se proporcionaron imágenes. Se asignará la imagen por defecto.");

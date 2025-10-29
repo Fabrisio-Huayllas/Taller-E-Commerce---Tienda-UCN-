@@ -340,5 +340,15 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 .ToListAsync();
         }
 
+         public async Task<Category?> GetCategoryByIdAsync(int categoryId)
+        {
+            return await _context.Categories.FindAsync(categoryId);
+        }
+
+        public async Task<Brand?> GetBrandByIdAsync(int brandId)
+        {
+            return await _context.Brands.FindAsync(brandId);
+        }
+
     }
 }

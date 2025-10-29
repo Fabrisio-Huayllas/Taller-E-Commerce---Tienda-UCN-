@@ -157,6 +157,19 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             // Resetea la contraseña usando el token
             var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
 
+            // R35: Invalidar sesiones activas
+            if (result.Succeeded)
+            {
+                // Cambiar SecurityStamp fuerza que todos los tokens JWT se invaliden
+                await _userManager.UpdateSecurityStampAsync(user);
+                
+                Log.Information("Contraseña actualizada y sesiones invalidadas para usuario ID: {UserId}", user.Id);
+            }
+            else
+            {
+                Log.Warning("Fallo al actualizar contraseña para usuario ID: {UserId}", user.Id);
+            }
+
             return result.Succeeded;
         }
     }

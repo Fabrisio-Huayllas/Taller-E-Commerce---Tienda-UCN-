@@ -110,7 +110,8 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// </summary>
         Task<List<Image>> GetProductImagesAsync(int productId);
 
-
+        Task<Category?> GetCategoryByIdAsync(int categoryId);
+        Task<Brand?> GetBrandByIdAsync(int brandId);
 
 
     }

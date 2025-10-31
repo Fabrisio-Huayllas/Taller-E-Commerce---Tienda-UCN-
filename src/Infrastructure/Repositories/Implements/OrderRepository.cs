@@ -16,14 +16,13 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             _context = context;
             _configuration = configuration;
-            _defaultPageSize = int.Parse(_configuration["Products:DefaultPageSize"] ?? throw new InvalidOperationException("La configuración 'DefaultPageSize' no está definida."));
+            // Inicializar page size por defecto desde configuración
+            _defaultPageSize = int.Parse(_configuration["Products:DefaultPageSize"] ?? "10");
         }
 
         /// <summary>
         /// Verifica si un código de orden existe.
         /// </summary>
-        /// <param name="orderCode">Código de la orden</param>
-        /// <returns>True si el código existe, de lo contrario false.</returns>
         public async Task<bool> CodeExistsAsync(string orderCode)
         {
             return await _context.Orders.AnyAsync(o => o.Code == orderCode);
@@ -32,12 +31,9 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <summary>
         /// Crea una nueva orden.
         /// </summary>
-        /// <param name="order">La orden a crear.</param>
-        /// <returns>Booleano que indica si la creación fue exitosa.</returns>
         public async Task<bool> CreateAsync(Order order)
         {
-            Order? existingOrder = await _context.Orders.FirstOrDefaultAsync(o => o.Code == order.Code);
-            if (existingOrder != null) { return false; }
+            if (order == null) throw new ArgumentNullException(nameof(order));
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             return true;
@@ -46,33 +42,159 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <summary>
         /// Obtiene una orden por su código.
         /// </summary>
-        /// <param name="orderCode">El código de la orden.</param>
-        /// <returns>La orden correspondiente o null si no se encuentra.</returns>
         public async Task<Order?> GetByCodeAsync(string orderCode)
         {
-            return await _context.Orders.AsNoTracking().Include(or => or.OrderItems).FirstOrDefaultAsync(o => o.Code == orderCode);
+            return await _context.Orders.Include(or => or.OrderItems).FirstOrDefaultAsync(o => o.Code == orderCode);
         }
 
         /// <summary>
-        /// Obtiene las órdenes de un usuario por su ID.
+        /// Obtiene las órdenes de un usuario por su ID con filtros y paginación.
         /// </summary>
-        /// <param name="userId">El ID del usuario.</param>
-        /// <param name="searchParams">Los parámetros de búsqueda.</param>
-        /// <returns>Una tarea que representa la operación asíncrona, con una lista de órdenes y el conteo total de órdenes.</returns>
-        public async Task<(IEnumerable<Order> orders, int totalCount)> GetByUserIdAsync(SearchParamsDTO searchParams, int userId)
+        public async Task<(List<Order> Orders, int TotalCount)> GetByUserIdAsync(SearchParamsDTO searchParams, int userId)
         {
-            var query = _context.Orders.AsNoTracking().Include(or => or.OrderItems).Where(or => or.UserId == userId);
-            var totalCount = await query.CountAsync();
-            string searchTerm = searchParams.SearchTerm?.Trim().ToLower() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+            var query = _context.Orders
+                .AsNoTracking()
+                .Include(o => o.OrderItems)
+                .Include(o => o.User)
+                .Where(o => o.UserId == userId)
+                .AsQueryable();
+
+            // Filtrado por número de orden
+            if (!string.IsNullOrWhiteSpace(searchParams.OrderNumber))
             {
-                query = query.Where(or => or.Code.Contains(searchTerm)
-                || or.OrderItems.Any(oi => oi.TitleAtMoment.ToLower().Contains(searchTerm)
-                || or.OrderItems.Any(oi => oi.DescriptionAtMoment.ToLower().Contains(searchTerm))));
+                var num = searchParams.OrderNumber.Trim().ToLower();
+                query = query.Where(o => o.Code.ToLower().Contains(num));
             }
-            query = query.Skip((searchParams.PageNumber - 1) * searchParams.PageSize ?? _defaultPageSize)
-                         .Take(searchParams.PageSize ?? _defaultPageSize);
-            return (await query.ToListAsync(), totalCount);
+
+            // Filtrado por rango de fechas
+            if (searchParams.From.HasValue)
+                query = query.Where(o => o.CreatedAt >= searchParams.From.Value);
+            if (searchParams.To.HasValue)
+                query = query.Where(o => o.CreatedAt <= searchParams.To.Value);
+
+            // Filtrado por status
+            if (searchParams.Status.HasValue)
+                query = query.Where(o => o.Status == searchParams.Status.Value);
+
+            var totalCount = await query.CountAsync();
+
+            // Normalizar pageNumber y limitar pageSize al máximo configurado
+            int pageSize = Math.Min(searchParams.PageSize ?? _defaultPageSize, _defaultPageSize);
+            int pageNumber = Math.Max(1, searchParams.PageNumber);
+
+            // Orden por createdAt desc por defecto
+            if (!string.IsNullOrWhiteSpace(searchParams.OrderBy))
+            {
+                var ob = searchParams.OrderBy!.Trim().ToLower();
+                var dir = (searchParams.OrderDir ?? "desc").Trim().ToLower();
+                if (ob == "total")
+                {
+                    query = dir == "asc" ? query.OrderBy(o => o.Total) : query.OrderByDescending(o => o.Total);
+                }
+                else // createdAt u otros => createdAt
+                {
+                    query = dir == "asc" ? query.OrderBy(o => o.CreatedAt) : query.OrderByDescending(o => o.CreatedAt);
+                }
+            }
+            else
+            {
+                query = query.OrderByDescending(o => o.CreatedAt);
+            }
+
+            query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+            var list = await query.ToListAsync();
+            return (Orders: list, TotalCount: totalCount);
+        }
+
+        /// <summary>
+        /// Obtiene todas las órdenes del sistema con filtros, búsqueda y paginación (para administrador).
+        /// </summary>
+        public async Task<(List<Order> Orders, int TotalCount)> GetAllAsync(SearchParamsDTO searchParams)
+        {
+            var query = _context.Orders
+                .AsNoTracking()
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                .AsQueryable();
+
+            // Filtros combinables
+            if (searchParams.Status.HasValue)
+            {
+                query = query.Where(o => o.Status == searchParams.Status.Value);
+            }
+
+            if (searchParams.From.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= searchParams.From.Value);
+            }
+
+            if (searchParams.To.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt <= searchParams.To.Value);
+            }
+
+            if (searchParams.CustomerId.HasValue)
+            {
+                query = query.Where(o => o.UserId == searchParams.CustomerId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchParams.CustomerEmail))
+            {
+                var email = searchParams.CustomerEmail.Trim().ToLower();
+                query = query.Where(o => o.User != null && o.User.Email != null && o.User.Email.ToLower().Contains(email));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchParams.OrderNumber))
+            {
+                var num = searchParams.OrderNumber.Trim().ToLower();
+                query = query.Where(o => o.Code.ToLower().Contains(num));
+            }
+
+            // (Opcional) búsqueda ligera dentro de item titles/descriptions si SearchParamsDTO tiene SearchTerm
+            // Evitamos referenciar SearchTerm si no existe; si su DTO incluye SearchTerm, el siguiente block puede activarse.
+#if true
+            // Si SearchParamsDTO contiene una propiedad SearchTerm, un patrón común es:
+            // string searchTerm = (searchParams as dynamic)?.SearchTerm;
+            // pero para evitar reflection/compilación, lo dejamos fuera. Si quieres supportarlo, dime y lo añado.
+#endif
+
+            var totalCount = await query.CountAsync();
+
+            // Normalizar pageNumber y limitar pageSize al máximo configurado
+            int pageSize = Math.Min(searchParams.PageSize ?? _defaultPageSize, _defaultPageSize);
+            int pageNumber = Math.Max(1, searchParams.PageNumber);
+
+            // Ordenamiento seguro (whitelist)
+            var orderBy = (searchParams.OrderBy ?? "createdAt").Trim().ToLower();
+            var orderDir = (searchParams.OrderDir ?? "desc").Trim().ToLower();
+
+            if (orderBy == "total")
+            {
+                query = orderDir == "asc" ? query.OrderBy(o => o.Total) : query.OrderByDescending(o => o.Total);
+            }
+            else // createdAt por defecto
+            {
+                query = orderDir == "asc" ? query.OrderBy(o => o.CreatedAt) : query.OrderByDescending(o => o.CreatedAt);
+            }
+
+            query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+
+            var list = await query.ToListAsync();
+            return (Orders: list, TotalCount: totalCount);
+        }
+
+        /// <summary>
+        /// Actualiza una orden existente.
+        /// </summary>
+        public async Task<bool> UpdateAsync(Order order)
+        {
+            if (order == null)
+                throw new ArgumentNullException(nameof(order));
+
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

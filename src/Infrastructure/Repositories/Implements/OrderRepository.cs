@@ -79,7 +79,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             var totalCount = await query.CountAsync();
 
             // Normalizar pageNumber y limitar pageSize al máximo configurado
-            int pageSize = Math.Min(searchParams.PageSize ?? _defaultPageSize, _defaultPageSize);
+            int pageSize = searchParams.PageSize ?? _defaultPageSize;
             int pageNumber = Math.Max(1, searchParams.PageNumber);
 
             // Orden por createdAt desc por defecto
@@ -151,18 +151,10 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 query = query.Where(o => o.Code.ToLower().Contains(num));
             }
 
-            // (Opcional) búsqueda ligera dentro de item titles/descriptions si SearchParamsDTO tiene SearchTerm
-            // Evitamos referenciar SearchTerm si no existe; si su DTO incluye SearchTerm, el siguiente block puede activarse.
-#if true
-            // Si SearchParamsDTO contiene una propiedad SearchTerm, un patrón común es:
-            // string searchTerm = (searchParams as dynamic)?.SearchTerm;
-            // pero para evitar reflection/compilación, lo dejamos fuera. Si quieres supportarlo, dime y lo añado.
-#endif
-
             var totalCount = await query.CountAsync();
 
             // Normalizar pageNumber y limitar pageSize al máximo configurado
-            int pageSize = Math.Min(searchParams.PageSize ?? _defaultPageSize, _defaultPageSize);
+            int pageSize = searchParams.PageSize ?? _defaultPageSize;
             int pageNumber = Math.Max(1, searchParams.PageNumber);
 
             // Ordenamiento seguro (whitelist)

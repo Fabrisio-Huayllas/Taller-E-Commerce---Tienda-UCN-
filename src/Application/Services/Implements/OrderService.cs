@@ -293,33 +293,5 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 _ => false
             };
         }
-
-        
-        public async Task<bool> ChangeStatusAsync(string code, OrderStatus newStatus, int? adminId, string? note)
-        {
-            var order = await _orderRepository.GetByCodeAsync(code) ?? throw new NotFoundException("Orden no encontrada.");
-
-            if (order.Status == newStatus)
-            {
-                // idempotente
-                return true;
-            }
-
-            if (!IsValidTransition(order.Status, newStatus))
-            {
-                throw new ConflictException($"Transición inválida de {order.Status} a {newStatus}.");
-            }
-
-            order.Status = newStatus;
-            order.StatusChangedAt = DateTime.UtcNow;
-            if (adminId.HasValue) order.ChangedByAdminId = adminId.Value;
-            if (!string.IsNullOrWhiteSpace(note))
-            {
-                order.ChangeReason = $"{DateTime.UtcNow:O} - {(adminId?.ToString() ?? "system")}: {note}";
-            }
-
-            var updated = await _orderRepository.UpdateAsync(order);
-            return updated;
-        }
     }
 }

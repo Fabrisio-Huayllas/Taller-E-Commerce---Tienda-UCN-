@@ -76,6 +76,19 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             if (searchParams.Status.HasValue)
                 query = query.Where(o => o.Status == searchParams.Status.Value);
 
+            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+                {
+                    var term = searchParams.SearchTerm.Trim().ToLower();
+                    query = query.Where(o =>
+                        o.Code.ToLower().Contains(term) ||
+                        (o.User != null && o.User.Email != null && (
+                            o.User.Email.ToLower().Contains(term) ||
+                            o.User.FirstName.ToLower().Contains(term) ||
+                            o.User.LastName.ToLower().Contains(term) ||
+                            o.User.Rut.ToLower().Contains(term)
+                        ))
+                    );
+                }
             var totalCount = await query.CountAsync();
 
             // Normalizar pageNumber y limitar pageSize al máximo configurado
@@ -149,6 +162,20 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             {
                 var num = searchParams.OrderNumber.Trim().ToLower();
                 query = query.Where(o => o.Code.ToLower().Contains(num));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+            {
+                var term = searchParams.SearchTerm.Trim().ToLower();
+                query = query.Where(o =>
+                    o.Code.ToLower().Contains(term) ||
+                    (o.User != null && o.User.Email != null && (
+                        o.User.Email.ToLower().Contains(term) ||
+                        o.User.FirstName.ToLower().Contains(term) ||
+                        o.User.LastName.ToLower().Contains(term) ||
+                        o.User.Rut.ToLower().Contains(term)
+                    ))
+                );
             }
 
             var totalCount = await query.CountAsync();

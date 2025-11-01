@@ -34,5 +34,10 @@ namespace TiendaProyecto.src.Application.DTO.OrderItemDTO
         /// URL de la imagen principal del producto.
         /// </summary>
         public string? ImageUrl { get; set; }
+        public string UnitPriceFormatted =>
+            UnitPrice.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
+
+        public string SubTotalFormatted =>
+            SubTotal.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
     }
 }

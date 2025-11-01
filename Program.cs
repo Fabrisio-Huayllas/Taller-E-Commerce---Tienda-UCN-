@@ -11,6 +11,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using Serilog;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
 using System.Text;
 using TiendaProyecto.src.Application.Jobs.Implements;
 using TiendaProyecto.src.Application.Mappers;
@@ -43,6 +46,13 @@ var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase
 
 // Agregar servicios de controllers y validación automática
 builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+    {
+        // Aceptar enums como strings (por ejemplo: "Shipped")
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        // Ignorar mayúsculas/minúsculas en las propiedades JSON
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>

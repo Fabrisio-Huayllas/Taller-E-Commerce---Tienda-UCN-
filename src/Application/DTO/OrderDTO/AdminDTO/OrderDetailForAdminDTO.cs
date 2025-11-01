@@ -77,5 +77,10 @@ namespace TiendaProyecto.src.Application.DTO.OrderDTO.AdminDTO
         /// Razón o nota asociada al último cambio de estado.
         /// </summary>
         public string? ChangeReason { get; set; }
+        public string TotalFormatted =>
+            Total.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
+
+        public string SubTotalFormatted =>
+            SubTotal.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
     }
 }

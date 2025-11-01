@@ -68,6 +68,8 @@ namespace TiendaProyecto.src.Application.DTO.OrderDTO.AdminDTO
         /// Monto total del pedido en pesos chilenos (CLP)
         /// </summary>
         public int Total { get; set; } 
+         public string TotalFormatted =>
+            Total.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
     }
 
     public class CustomerSummaryDTO

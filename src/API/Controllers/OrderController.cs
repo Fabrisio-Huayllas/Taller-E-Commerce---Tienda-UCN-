@@ -25,7 +25,6 @@ namespace TiendaProyecto.src.API.Controllers
             _orderService = orderService;
         }
 
-        // 🧾 ========== CLIENTE ==========
 
         /// <summary>
         /// Crea una nueva orden (cliente autenticado).

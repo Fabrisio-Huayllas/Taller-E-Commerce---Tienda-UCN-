@@ -85,6 +85,7 @@ builder.Services.AddControllers()
 #region Email Service Configuration
 Log.Information("Configurando servicio de Email");
 builder.Services.AddOptions();
+builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
 {
@@ -135,6 +136,8 @@ builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
 builder.Services.AddScoped<CartMapper>();
 builder.Services.AddScoped<OrderMapper>();
+builder.Services.AddScoped<CategoryMapper>();
+builder.Services.AddScoped<BrandMapper>();
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();

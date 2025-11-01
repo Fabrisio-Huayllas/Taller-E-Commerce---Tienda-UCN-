@@ -49,13 +49,28 @@ namespace TiendaProyecto.src.API.Controllers
         /// </summary>
         /// <param name="dto">DTO con la contraseña actual y nueva.</param>
         /// <returns>Resultado de la operación.</returns>
-        [HttpPut("change-password")]
+        [HttpPatch("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
         {
+            // Extrae userId del token JWT (R31)
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            // Valida que el usuario esté identificado
+            if (userId == 0)
+                throw new UnauthorizedAppException("Usuario no identificado.");
+
+            // El middleware capturará cualquier excepción lanzada aquí
+            // y devolverá códigos HTTP correctos automáticamente
             await _userService.ChangePasswordAsync(userId, dto);
-            return Ok(new { message = "Contraseña actualizada correctamente." });
+            
+            Log.Information("Contraseña cambiada exitosamente para usuario ID: {UserId}", userId);
+            
+            // Respuesta exitosa con GenericResponse
+            return Ok(new GenericResponse<string>(
+                "Contraseña actualizada correctamente. Por favor, inicie sesión nuevamente.",
+                null
+            ));
         }
 
         /// <summary>

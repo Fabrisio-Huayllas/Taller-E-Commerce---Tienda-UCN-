@@ -98,5 +98,11 @@ namespace TiendaProyecto.src.Domain.Models
         /// Fecha de actualización del producto.
         /// </summary>
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+            /// Precio final del producto después de aplicar el descuento.
+            /// </summary>
+            public int FinalPrice => (int)(Price * (1 - (decimal)Discount / 100));
+        
     }
 }

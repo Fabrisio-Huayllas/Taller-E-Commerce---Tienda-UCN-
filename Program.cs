@@ -11,16 +11,19 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using Serilog;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
 using System.Text;
 using TiendaProyecto.src.Application.Jobs.Implements;
 using TiendaProyecto.src.Application.Mappers;
 using TiendaProyecto.src.Application.Services.Implements;
 using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Infrastructure.Repositories.Implements;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Exceptions;
 using TiendaProyecto.src.Infrastructure.Data;
-using TiendaProyecto.src.Infrastructure.Repositories.Implements;
-using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 using TiendaProyecto.src.Middleware;
 
 
@@ -43,6 +46,13 @@ var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase
 
 // Agregar servicios de controllers y validación automática
 builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+    {
+        // Aceptar enums como strings (por ejemplo: "Shipped")
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        // Ignorar mayúsculas/minúsculas en las propiedades JSON
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -125,6 +135,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
 builder.Services.AddScoped<CartMapper>();
+builder.Services.AddScoped<OrderMapper>();
 builder.Services.AddScoped<CategoryMapper>();
 builder.Services.AddScoped<BrandMapper>();
 
@@ -147,6 +158,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 
 // Configurar Swagger/OpenAPI
@@ -199,6 +212,11 @@ builder.Services.AddHangfireServer();
 
 #endregion
 
+// Agregar política de autorización para administradores
+builder.Services.AddAuthorization(opts => {
+  opts.AddPolicy("Admin", p => p.RequireRole("Admin"));
+});
+
 var app = builder.Build();
 // Configurar el panel de control de Hangfire
 app.UseHangfireDashboard(builder.Configuration["HangfireDashboard:DashboardPath"] ?? throw new InvalidOperationException("La ruta de hangfire no ha sido declarada"), new DashboardOptions
@@ -241,9 +259,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<CartMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<CartMiddleware>();
 app.MapControllers();
 app.Run();

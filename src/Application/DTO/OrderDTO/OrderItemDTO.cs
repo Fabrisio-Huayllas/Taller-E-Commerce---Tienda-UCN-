@@ -24,10 +24,15 @@ namespace TiendaProyecto.src.Application.DTO.OrderDTO
         /// <summary>
         /// Precio del producto al momento de la compra.
         /// </summary>
-        public required string PriceAtMoment { get; set; }
+        public required int PriceAtMoment { get; set; }
         /// <summary>
         /// Cantidad de unidades del producto en la orden.
         /// </summary>
         public required int Quantity { get; set; }
+        /// <summary>
+        /// formato CLP
+        /// </summary> 
+        public string PriceAtMomentFormatted =>
+            PriceAtMoment.ToString("C0", new System.Globalization.CultureInfo("es-CL"));
     }
 }

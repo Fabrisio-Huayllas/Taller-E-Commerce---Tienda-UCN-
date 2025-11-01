@@ -289,6 +289,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         }
         public async Task UpdateAsync(Product product)
         {
+            if (product == null) throw new ArgumentNullException(nameof(product));
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
         }

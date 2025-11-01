@@ -49,7 +49,7 @@ namespace TiendaProyecto.src.Middleware
             }
 
             context.Response.Headers[HeaderName] = cid;
-            context.TraceIdentifier = cid;
+            context.TraceIdentifier = cid!;
 
             await _next(context);
         }

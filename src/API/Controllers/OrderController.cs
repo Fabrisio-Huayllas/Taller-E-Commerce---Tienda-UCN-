@@ -6,35 +6,41 @@ using TiendaProyecto.src.Application.DTO.BaseResponse;
 using TiendaProyecto.src.Application.DTO.OrderDTO;
 using TiendaProyecto.src.Application.DTO.ProductDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Application.DTO.OrderDTO.AdminDTO;
 
 
 namespace TiendaProyecto.src.API.Controllers
 {
     /// <summary>
-    /// Controlador para la gestión de órdenes.
+    /// Controlador para la gestión de órdenes (clientes y administradores).
     /// </summary>
-    public class OrderController : BaseController
+    [ApiController]
+    [Route("api/orders")]               // <- ruta cliente
+    public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
 
-        public OrderController(IOrderService orderService)
+        public OrdersController(IOrderService orderService)
         {
             _orderService = orderService;
         }
 
+
         /// <summary>
-        /// Crea una nueva orden.
+        /// Crea una nueva orden (cliente autenticado).
         /// </summary>
-        /// <returns>Detalles de la orden creada.</returns>
         [HttpPost("create")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateOrder()
         {
-            var userId = (User.Identity?.IsAuthenticated == true ? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value : null) ?? throw new UnauthorizedAccessException("Usuario no autenticado.");
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                ?? throw new UnauthorizedAccessException("Usuario no autenticado.");
+
             int.TryParse(userId, out int parsedUserId);
             var result = await _orderService.CreateAsync(parsedUserId);
             return Created($"api/order/detail/{result}", new GenericResponse<string>("Orden creada exitosamente", result));
         }
+
         /// <summary>
         /// Obtiene los detalles de una orden.
         /// </summary>
@@ -57,10 +63,40 @@ namespace TiendaProyecto.src.API.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetUserOrders([FromQuery] SearchParamsDTO searchParams)
         {
-            var userId = (User.Identity?.IsAuthenticated == true ? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value : null) ?? throw new UnauthorizedAccessException("Usuario no autenticado.");
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                ?? throw new UnauthorizedAccessException("Usuario no autenticado.");
+
             int.TryParse(userId, out int parsedUserId);
-            var result = _orderService.GetByUserIdAsync(searchParams, parsedUserId);
-            return Ok(new GenericResponse<ListedOrderDetailDTO>("Órdenes del usuario obtenidas exitosamente", await result));
+            var result = await _orderService.GetByUserIdAsync(searchParams, parsedUserId);
+            return Ok(new GenericResponse<ListedOrderDetailDTO>("Órdenes del usuario obtenidas exitosamente", result));
+        }
+
+        //========== ADMIN ==========
+
+        /// <summary>
+        /// Obtiene una lista de todas las órdenes (solo administradores).
+        /// </summary>
+        [HttpGet("admin/list")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllOrders([FromQuery] SearchParamsDTO searchParams)
+        {
+            var result = await _orderService.GetAllAsync(searchParams);
+            return Ok(new GenericResponse<ListedOrdersForAdminDTO>("Órdenes obtenidas exitosamente", result));
+        }
+
+        /// <summary>
+        /// Cambia el estado de una orden (solo administradores).
+        /// </summary>
+        [HttpPut("admin/{orderCode}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ChangeOrderStatus(string orderCode, [FromBody] UpdateOrderStatusDTO request)
+        {
+            var adminId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                ?? throw new UnauthorizedAccessException("Administrador no autenticado.");
+
+            int.TryParse(adminId, out int parsedAdminId);
+            await _orderService.ChangeStatusAsync(orderCode, request.Status, parsedAdminId, request.Note);
+            return NoContent(); //
         }
     }
 }

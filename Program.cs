@@ -11,19 +11,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using Serilog;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using TiendaProyecto.src.Application.Jobs.Implements;
 using TiendaProyecto.src.Application.Mappers;
 using TiendaProyecto.src.Application.Services.Implements;
 using TiendaProyecto.src.Application.Services.Interfaces;
-using TiendaProyecto.src.Infrastructure.Repositories.Implements;
-using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Exceptions;
 using TiendaProyecto.src.Infrastructure.Data;
+using TiendaProyecto.src.Infrastructure.Repositories.Implements;
+using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 using TiendaProyecto.src.Middleware;
 
 
@@ -138,6 +137,11 @@ builder.Services.AddScoped<CartMapper>();
 builder.Services.AddScoped<OrderMapper>();
 builder.Services.AddScoped<CategoryMapper>();
 builder.Services.AddScoped<BrandMapper>();
+builder.Services.AddScoped<UserAdminMapper>();
+
+// Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -156,6 +160,7 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -213,8 +218,9 @@ builder.Services.AddHangfireServer();
 #endregion
 
 // Agregar política de autorización para administradores
-builder.Services.AddAuthorization(opts => {
-  opts.AddPolicy("Admin", p => p.RequireRole("Admin"));
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("Admin", p => p.RequireRole("Admin"));
 });
 
 var app = builder.Build();

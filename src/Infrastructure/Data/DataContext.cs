@@ -21,15 +21,15 @@ namespace TiendaProyecto.src.Infrastructure.Data
         /// </summary>
         /// <param name="options">Opciones de configuración del DbContext.</param>
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
-       /// <summary>
+        /// <summary>
         /// Constructor por defecto.
         /// </summary>
         public DataContext() : base() { }
-  /// <summary>
+        /// <summary>
         /// Productos disponibles en la tienda.
         /// </summary>
         public DbSet<Product> Products { get; set; } = null!;
-        
+
         /// <summary>
         /// Imágenes de los productos.
         /// </summary>
@@ -62,5 +62,9 @@ namespace TiendaProyecto.src.Infrastructure.Data
         /// Códigos de verificación asociados a los usuarios.
         /// </summary>
         public DbSet<VerificationCode> VerificationCodes { get; set; } = null!;
+        /// <summary>
+        /// Registros de auditoría de cambios de estado de usuario.
+        /// </summary>
+        public DbSet<UserStatusAudit> UserStatusAudits { get; set; } = null!;
     }
 }

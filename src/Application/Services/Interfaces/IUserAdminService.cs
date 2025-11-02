@@ -20,5 +20,14 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// Obtiene el detalle completo de un usuario para administradores.
         /// </summary>
         Task<UserDetailForAdminDTO> GetUserDetailAsync(int id);
+
+        /// <summary>
+        /// Actualiza el estado de un usuario (bloquear/desbloquear).
+        /// </summary>
+        /// <param name="userId">ID del usuario a modificar</param>
+        /// <param name="updateDto">DTO con el nuevo estado y razón</param>
+        /// <param name="adminId">ID del administrador que realiza el cambio</param>
+        /// <returns>True si se actualizó correctamente</returns>
+        Task<bool> UpdateUserStatusAsync(int userId, UpdateUserStatusDTO updateDto, int adminId);
     }
 }

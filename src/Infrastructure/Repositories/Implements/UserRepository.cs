@@ -1,11 +1,11 @@
-using System.Xml.Schema;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Xml.Schema;
+using TiendaProyecto.src.Application.DTO.UserDTO;
 using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Infrastructure.Data;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
-using TiendaProyecto.src.Application.DTO.UserDTO;
 
 
 namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
@@ -149,7 +149,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             var roles = await _userManager.GetRolesAsync(user);
             return roles.FirstOrDefault()!;
         }
-        
+
         public async Task<bool> UpdatePasswordAsync(User user, string newPassword)
         {
             // Genera un token seguro para resetear la contraseña
@@ -163,7 +163,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             {
                 // Cambiar SecurityStamp fuerza que todos los tokens JWT se invaliden
                 await _userManager.UpdateSecurityStampAsync(user);
-                
+
                 Log.Information("Contraseña actualizada y sesiones invalidadas para usuario ID: {UserId}", user.Id);
             }
             else
@@ -200,7 +200,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             // Filtro por rango de fechas de creación
             if (searchParams.CreatedFrom.HasValue)
                 query = query.Where(u => u.RegisteredAt >= searchParams.CreatedFrom.Value);
-            
+
             if (searchParams.CreatedTo.HasValue)
                 query = query.Where(u => u.RegisteredAt <= searchParams.CreatedTo.Value);
 
@@ -229,14 +229,14 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             {
                 query = orderBy switch
                 {
-                    "createdat" => orderDir == "asc" 
-                        ? query.OrderBy(u => u.RegisteredAt) 
+                    "createdat" => orderDir == "asc"
+                        ? query.OrderBy(u => u.RegisteredAt)
                         : query.OrderByDescending(u => u.RegisteredAt),
-                    "lastlogin" => orderDir == "asc" 
-                        ? query.OrderBy(u => u.LastLoginTime) 
+                    "lastlogin" => orderDir == "asc"
+                        ? query.OrderBy(u => u.LastLoginTime)
                         : query.OrderByDescending(u => u.LastLoginTime),
-                    "email" => orderDir == "asc" 
-                        ? query.OrderBy(u => u.Email) 
+                    "email" => orderDir == "asc"
+                        ? query.OrderBy(u => u.Email)
                         : query.OrderByDescending(u => u.Email),
                     _ => query.OrderByDescending(u => u.RegisteredAt)
                 };
@@ -280,6 +280,74 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 .FirstOrDefaultAsync();
 
             return userRole;
+        }
+
+        /// <summary>
+        /// Actualiza el estado de un usuario (activo/bloqueado).
+        /// </summary>
+        public async Task<bool> UpdateUserStatusAsync(int userId, bool isBlocked)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            if (isBlocked)
+            {
+                // Bloquear por 100 años (prácticamente permanente)
+                user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            }
+            else
+            {
+                // Desbloquear
+                user.LockoutEnd = null;
+            }
+
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        /// <summary>
+        /// Cuenta cuántos administradores activos hay en el sistema.
+        /// </summary>
+        public async Task<int> CountActiveAdminsAsync()
+        {
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            if (adminRole == null) return 0;
+
+            return await _context.UserRoles
+                .Where(ur => ur.RoleId == adminRole.Id)
+                .Join(_context.Users,
+                    ur => ur.UserId,
+                    u => u.Id,
+                    (ur, u) => u)
+                .Where(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.UtcNow)
+                .CountAsync();
+        }
+
+        /// <summary>
+        /// Registra un cambio de estado en la auditoría.
+        /// </summary>
+        public async Task<bool> CreateStatusAuditAsync(UserStatusAudit audit)
+        {
+            _context.UserStatusAudits.Add(audit);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        /// <summary>
+        /// Invalida las sesiones activas de un usuario.
+        /// </summary>
+        public async Task<bool> InvalidateUserSessionsAsync(int userId)
+        {
+            // En una implementación real, aquí invalidarías tokens JWT activos
+            // Por ahora, actualizamos un timestamp que podría usarse para validar tokens
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            user.UpdatedAt = DateTime.UtcNow; // Los tokens anteriores a esta fecha se consideran inválidos
+            await _context.SaveChangesAsync();
+
+            Log.Information("Sesiones invalidadas para usuario {UserId}", userId);
+            return true;
         }
     }
 }

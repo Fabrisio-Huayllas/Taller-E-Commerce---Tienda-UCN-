@@ -118,5 +118,33 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         /// <param name="id">ID del usuario</param>
         /// <returns>Usuario encontrado o nulo</returns>
         Task<User?> GetUserForAdminAsync(int id);
+
+        /// <summary>
+        /// Actualiza el estado de un usuario (activo/bloqueado).
+        /// </summary>
+        /// <param name="userId">ID del usuario</param>
+        /// <param name="isBlocked">True para bloquear, false para desbloquear</param>
+        /// <returns>True si se actualizó correctamente</returns>
+        Task<bool> UpdateUserStatusAsync(int userId, bool isBlocked);
+
+        /// <summary>
+        /// Cuenta cuántos administradores activos hay en el sistema.
+        /// </summary>
+        /// <returns>Número de administradores activos</returns>
+        Task<int> CountActiveAdminsAsync();
+
+        /// <summary>
+        /// Registra un cambio de estado en la auditoría.
+        /// </summary>
+        /// <param name="audit">Registro de auditoría</param>
+        /// <returns>True si se registró correctamente</returns>
+        Task<bool> CreateStatusAuditAsync(UserStatusAudit audit);
+
+        /// <summary>
+        /// Invalida las sesiones activas de un usuario (simulado con timestamp).
+        /// </summary>
+        /// <param name="userId">ID del usuario</param>
+        /// <returns>True si se invalidaron las sesiones</returns>
+        Task<bool> InvalidateUserSessionsAsync(int userId);
     }
 }

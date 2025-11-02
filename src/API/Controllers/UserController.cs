@@ -49,5 +49,35 @@ namespace TiendaProyecto.src.API.Controllers
             var result = await _userAdminService.GetUserDetailAsync(id);
             return Ok(new GenericResponse<UserDetailForAdminDTO>("Detalle de usuario obtenido exitosamente", result));
         }
+
+        /// <summary>
+        /// Actualiza el estado de un usuario (bloquear/desbloquear).
+        /// </summary>
+        /// <param name="id">ID del usuario.</param>
+        /// <param name="updateDto">DTO con el nuevo estado y razón.</param>
+        /// <returns>Confirmación de la actualización.</returns>
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateUserStatus(int id, [FromBody] UpdateUserStatusDTO updateDto)
+        {
+            // Obtener ID del administrador desde el token
+            var adminIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(adminIdClaim, out int adminId))
+            {
+                return Unauthorized(new GenericResponse<object>("Administrador no autenticado", null));
+            }
+
+            var result = await _userAdminService.UpdateUserStatusAsync(id, updateDto, adminId);
+
+            if (result)
+            {
+                var message = updateDto.Status.ToLower() == "blocked"
+                    ? "Usuario bloqueado exitosamente"
+                    : "Usuario desbloqueado exitosamente";
+
+                return Ok(new GenericResponse<object>(message, null));
+            }
+
+            return BadRequest(new GenericResponse<object>("No se pudo actualizar el estado del usuario", null));
+        }
     }
 }

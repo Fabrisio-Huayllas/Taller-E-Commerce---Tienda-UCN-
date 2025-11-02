@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TiendaProyecto.src.Application.DTO.UserDTO;
+using TiendaProyecto.src.Application.DTO.BaseResponse;
+
 
 namespace TiendaProyecto.src.Application.Services.Interfaces
 {
@@ -29,5 +31,7 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// <param name="adminId">ID del administrador que realiza el cambio</param>
         /// <returns>True si se actualizó correctamente</returns>
         Task<bool> UpdateUserStatusAsync(int userId, UpdateUserStatusDTO updateDto, int adminId);
+    
+        Task<GenericResponse<object>> UpdateUserRoleAsync(int userId, UpdateUserRoleDTO dto, string adminId);
     }
 }

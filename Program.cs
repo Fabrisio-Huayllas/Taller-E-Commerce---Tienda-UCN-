@@ -223,7 +223,15 @@ builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("Admin", p => p.RequireRole("Admin"));
 });
 
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+   
+});
+
 var app = builder.Build();
+
 // Configurar el panel de control de Hangfire
 app.UseHangfireDashboard(builder.Configuration["HangfireDashboard:DashboardPath"] ?? throw new InvalidOperationException("La ruta de hangfire no ha sido declarada"), new DashboardOptions
 {

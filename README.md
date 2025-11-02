@@ -224,6 +224,11 @@ Antes de ejecutar el proyecto, instala lo siguiente:
 - **FluentValidation**
 - **Swagger / OpenAPI**
 
+  ## Integrantes del grupo
+  -Sebastian Hernandez - 21.701.267-8 - sebastian.hernandez02@alumnos.ucn.cl
+  -Fabrisio Huayllas - -
+  -Rodrigo Tapia - -
+
 ---
 
 

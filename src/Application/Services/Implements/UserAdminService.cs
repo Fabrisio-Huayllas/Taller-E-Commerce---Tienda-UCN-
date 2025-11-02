@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TiendaProyecto.src.Application.DTO.UserDTO;
 using TiendaProyecto.src.Application.Services.Interfaces;
+using TiendaProyecto.src.Domain.Models;
 using TiendaProyecto.src.Exceptions;
 using TiendaProyecto.src.Infrastructure.Repositories.Interfaces;
 
@@ -41,34 +42,22 @@ namespace TiendaProyecto.src.Application.Services.Implements
             if (!string.IsNullOrWhiteSpace(searchParams.OrderBy) &&
                 !allowedOrderFields.Contains(searchParams.OrderBy.ToLower()))
             {
-                throw new BadRequestAppException("Campo de ordenamiento no válido.");
+                throw new BadRequestAppException("Campo de ordenamiento no válido. Campos permitidos: createdAt, lastLogin, email");
             }
 
             var (users, totalCount) = await _userRepository.GetUsersForAdminAsync(searchParams);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
+            // Mapear a DTOs
             var userDtos = new List<UserForAdminDTO>();
             foreach (var user in users)
             {
-                var role = await _userRepository.GetUserRoleByIdAsync(user.Id) ?? "Sin rol";
-                var status = GetUserStatus(user);
-
-                var dto = new UserForAdminDTO
-                {
-                    Id = user.Id,
-                    Name = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email!,
-                    Role = role,
-                    Status = status,
-                    CreatedAt = user.RegisteredAt,
-                    LastLogin = user.LastLoginTime
-                };
-                userDtos.Add(dto);
+                var userRole = await _userRepository.GetUserRoleByIdAsync(user.Id);
+                var userDto = user.Adapt<UserForAdminDTO>();
+                userDto.Role = userRole ?? "Sin rol";
+                userDto.Status = GetUserStatus(user);
+                userDtos.Add(userDto);
             }
-
-            Log.Information("Listado de usuarios obtenido para admin. Total: {TotalCount}, Página: {PageNumber}",
-                totalCount, searchParams.PageNumber);
 
             return new ListedUsersForAdminDTO
             {
@@ -88,34 +77,91 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 throw new NotFoundException($"Usuario con ID {id} no encontrado.");
             }
 
-            var role = await _userRepository.GetUserRoleByIdAsync(id) ?? "Sin rol";
-            var status = GetUserStatus(user);
+            var userRole = await _userRepository.GetUserRoleByIdAsync(id);
+            var userDto = user.Adapt<UserDetailForAdminDTO>();
+            userDto.Role = userRole ?? "Sin rol";
+            userDto.Status = GetUserStatus(user);
 
-            var dto = new UserDetailForAdminDTO
+            return userDto;
+        }
+
+        public async Task<bool> UpdateUserStatusAsync(int userId, UpdateUserStatusDTO updateDto, int adminId)
+        {
+            // Verificar que el usuario existe
+            var user = await _userRepository.GetUserForAdminAsync(userId);
+            if (user == null)
             {
-                Id = user.Id,
-                Name = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email!,
-                Rut = user.Rut,
-                PhoneNumber = user.PhoneNumber,
-                Role = role,
-                Status = status,
-                EmailConfirmed = user.EmailConfirmed,
-                CreatedAt = user.RegisteredAt,
-                UpdatedAt = user.UpdatedAt,
-                LastLogin = user.LastLoginTime
+                throw new NotFoundException($"Usuario con ID {userId} no encontrado.");
+            }
+
+            // Regla de negocio: No permitir auto-bloqueo
+            if (userId == adminId && updateDto.Status.ToLower() == "blocked")
+            {
+                throw new ConflictException("No puedes bloquearte a ti mismo.");
+            }
+
+            // Obtener estado actual
+            var currentStatus = GetUserStatus(user);
+            var newStatus = updateDto.Status.ToLower() == "blocked" ? "Bloqueado" : "Activo";
+
+            // Verificar si ya está en el estado solicitado (idempotencia)
+            if (currentStatus == newStatus)
+            {
+                return true; // Ya está en el estado solicitado
+            }
+
+            // Regla de negocio: No dejar el sistema sin administradores
+            if (updateDto.Status.ToLower() == "blocked")
+            {
+                var userRole = await _userRepository.GetUserRoleByIdAsync(userId);
+                if (userRole == "Admin")
+                {
+                    var activeAdminsCount = await _userRepository.CountActiveAdminsAsync();
+                    if (activeAdminsCount <= 1)
+                    {
+                        throw new ConflictException("No se puede bloquear al último administrador del sistema.");
+                    }
+                }
+            }
+
+            // Actualizar estado
+            var isBlocked = updateDto.Status.ToLower() == "blocked";
+            var updated = await _userRepository.UpdateUserStatusAsync(userId, isBlocked);
+
+            if (!updated)
+            {
+                return false;
+            }
+
+            // Invalidar sesiones si se está bloqueando
+            if (isBlocked)
+            {
+                await _userRepository.InvalidateUserSessionsAsync(userId);
+            }
+
+            // Registrar auditoría
+            var audit = new UserStatusAudit
+            {
+                UserId = userId,
+                ChangedByAdminId = adminId,
+                PreviousStatus = currentStatus,
+                NewStatus = newStatus,
+                Reason = updateDto.Reason,
+                ChangedAt = DateTime.UtcNow
             };
 
-            Log.Information("Detalle de usuario {UserId} obtenido para admin", id);
-            return dto;
+            await _userRepository.CreateStatusAuditAsync(audit);
+
+            Log.Information("Estado de usuario actualizado. UserId: {UserId}, Estado: {NewStatus}, AdminId: {AdminId}",
+                userId, newStatus, adminId);
+
+            return true;
         }
 
         private static string GetUserStatus(Domain.Models.User user)
         {
             if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
                 return "Bloqueado";
-
             return "Activo";
         }
     }

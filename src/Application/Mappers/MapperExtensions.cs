@@ -31,6 +31,9 @@ namespace TiendaProyecto.src.Application.Mappers
             var brandMapper = serviceProvider.GetService<BrandMapper>();
             brandMapper?.ConfigureAllMappings();
 
+            var userAdminMapper = serviceProvider.GetService<UserAdminMapper>();
+            userAdminMapper?.ConfigureAllMappings();
+
             // Configuración global de Mapster para ignorar valores nulos
             TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
         }

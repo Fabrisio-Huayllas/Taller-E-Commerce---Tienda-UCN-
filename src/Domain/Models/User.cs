@@ -39,6 +39,10 @@ namespace TiendaProyecto.src.Domain.Models
         /// </summary>
         public required DateTime BirthDate { get; set; }
 
+        /// <summary>
+        /// Fecha de último acceso del usuario.
+        /// </summary>
+        public DateTime? LastLoginTime { get; set; }
 
         /// <summary>
         /// Indica si el usuario ha aceptado los términos y condiciones.

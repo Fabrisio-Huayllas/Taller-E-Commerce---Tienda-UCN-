@@ -90,6 +90,7 @@ namespace TiendaProyecto.src.Middleware
                 ),
                 KeyNotFoundException knf => (HttpStatusCode.NotFound, "NOT_FOUND", knf.Message, null),
                 InvalidOperationException ioe => (HttpStatusCode.BadRequest, "INVALID_OPERATION", ioe.Message, null),
+                ArgumentException ae => (HttpStatusCode.BadRequest, "INVALID_ARGUMENT", ae.Message, null),
                 TimeoutException te => (HttpStatusCode.TooManyRequests, "TIMEOUT", te.Message, null),
 
                 _ => (HttpStatusCode.InternalServerError, "INTERNAL_ERROR", "An internal server error occurred.", null),

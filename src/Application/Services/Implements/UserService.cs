@@ -305,10 +305,18 @@ namespace TiendaProyecto.src.Application.Services.Implements
             await _verificationCodeRepository.CreateAsync(verificationCode);
 
             // Enviar el código por correo
-            await _emailService.SendVerificationCodeEmailAsync(user.Email, code);
+            await _emailService.SendVerificationCodeEmailAsync(GetEmailOrThrow(user), code);
+
 
             return "Código enviado al correo electrónico.";
         }
+        private string GetEmailOrThrow(User user)
+        {
+         if (string.IsNullOrWhiteSpace(user.Email))
+              throw new InvalidOperationException("El usuario no tiene correo electrónico.");
+         return user.Email;
+        }
+
 
         public async Task ResetPasswordAsync(ResetPasswordDTO dto)
         {

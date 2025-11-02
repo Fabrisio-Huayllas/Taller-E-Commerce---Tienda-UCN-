@@ -217,6 +217,19 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Tarea que representa la operación asincrónica retornando un objeto CartDTO.</returns>
         public async Task<CartDTO> UpdateItemQuantityAsync(string buyerId, int productId, int quantity, int? userId = null)
         {
+            
+            //  Regla explícita para quantity == 0 (R40)
+            if (quantity == 0)
+            {
+                Log.Information("Quantity es 0, eliminando item con ProductId: {ProductId}", productId);
+                return await RemoveItemAsync(buyerId, productId, userId);
+            }
+            
+            //  Validar cantidad negativa
+            if (quantity < 0)
+            {
+                throw new ArgumentException("La cantidad debe ser mayor o igual a 0.");
+            }
             Cart? cart = await _cartRepository.FindAsync(buyerId, userId);
             if (cart == null)
             {
@@ -246,6 +259,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
             itemToUpdate.Quantity = quantity;
             RecalculateCartTotals(cart);
             await _cartRepository.UpdateAsync(cart);
+
+            //  Logging actualizado (R45)
+            Log.Information("Cantidad actualizada. ProductId: {ProductId}, NuevaQuantity: {Quantity}, CartId: {CartId}", 
+            productId, quantity, cart.Id);
+
 
             return cart.Adapt<CartDTO>();
         }
@@ -282,7 +300,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <param name="buyerId">ID del comprador.</param>
         /// <param name="userId">ID del usuario.</param>
         /// <returns>Tarea que representa la operación asincrónica retornando un objeto CartDTO.</returns>
-        public async Task<CartDTO> CheckoutAsync(string buyerId, int? userId)
+        public async Task<CartCheckoutResultDTO> CheckoutAsync(string buyerId, int? userId)
         {
             Cart? cart = await _cartRepository.FindAsync(buyerId, userId);
             if (cart == null)
@@ -295,25 +313,41 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Log.Information("El carrito está vacío para el comprador especificado {BuyerId}.", buyerId);
                 throw new InvalidOperationException("El carrito está vacío.");
             }
+            var warnings = new List<string>();
             var itemsToRemove = new List<CartItem>();
             var itemsToUpdate = new List<(CartItem item, int newQuantity)>();
             bool hasChanges = false;
 
             foreach (var item in cart.CartItems.ToList())
             {
+                var product = await _productRepository.GetByIdAsync(item.ProductId);
+        
+                // ✅ CASO 1: Producto inactivo o eliminado (R49)
+                if (product == null || !product.IsAvailable)
+                {
+                    string productName = product?.Title ?? item.Product?.Title ?? "Desconocido";
+                    warnings.Add($"El producto '{productName}' ya no está disponible y fue eliminado del carrito.");
+                    itemsToRemove.Add(item);
+                    Log.Information("Producto {ProductId} eliminado del carrito (no disponible).", item.ProductId);
+                    continue;
+                }
+                
                 int productStock = await _productRepository.GetRealStockAsync(item.ProductId);
-
+                
+                // CASO 2: Producto agotado (R48)
                 if (productStock == 0)
                 {
-                    Log.Information("El producto con ID {ProductId} está agotado.", item.ProductId);
+                    warnings.Add($"El producto '{product.Title}' está agotado y fue eliminado del carrito.");
                     itemsToRemove.Add(item);
-                    hasChanges = true;
+                    Log.Information("Producto {ProductId} eliminado del carrito (stock agotado).", item.ProductId);
                 }
+                // CASO 3: Stock insuficiente (R48)
                 else if (item.Quantity > productStock)
                 {
-                    Log.Information("Ajustando cantidad del producto {ProductId} con cantidad actualizada {NewQuantity}", item.ProductId, productStock);
+                    warnings.Add($"El producto '{product.Title}' se ajustó de {item.Quantity} a {productStock} unidades (stock disponible).");
                     itemsToUpdate.Add((item, productStock));
-                    hasChanges = true;
+                    Log.Information("Producto {ProductId} ajustado de {OldQuantity} a {NewQuantity}.", 
+                        item.ProductId, item.Quantity, productStock);
                 }
             }
 
@@ -341,7 +375,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Log.Information("No se requirieron ajustes en el carrito durante checkout. CartId: {CartId}", cart.Id);
             }
 
-            return cart.Adapt<CartDTO>();
+            return cart.Adapt<CartCheckoutResultDTO>();
         }
     }
 }

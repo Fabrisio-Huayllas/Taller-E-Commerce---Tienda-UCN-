@@ -328,7 +328,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
 
             // Actualizar los campos del producto
             product.Title = updateProductDTO.Name;
-            product.Description = updateProductDTO.Description;
+            product.Description = updateProductDTO.Description ?? string.Empty;
             product.Price = updateProductDTO.Price;
             product.Stock = updateProductDTO.Stock;
             product.CategoryId = updateProductDTO.CategoryId;

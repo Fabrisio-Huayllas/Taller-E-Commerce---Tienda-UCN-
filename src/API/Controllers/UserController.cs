@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using TiendaProyecto.src.api.Controllers;
 using TiendaProyecto.src.Application.DTO.BaseResponse;
@@ -79,5 +80,35 @@ namespace TiendaProyecto.src.API.Controllers
 
             return BadRequest(new GenericResponse<object>("No se pudo actualizar el estado del usuario", null));
         }
+
+        /// <summary>
+        /// R140: Actualiza el rol de un usuario (solo Admin)
+        /// </summary>
+        /// <param name="id">ID del usuario a modificar</param>
+        /// <param name="dto">Datos del nuevo rol</param>
+        /// <returns>Respuesta con información del cambio realizado</returns>
+        [HttpPatch("{id}/role")]
+        [ProducesResponseType(typeof(GenericResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleDTO dto)
+        {
+            // Obtener el ID del admin desde el token JWT
+            var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(adminId))
+            {
+                return Unauthorized(new GenericResponse<object>("No se pudo identificar al usuario autenticado"));
+            }
+            
+            // El servicio lanzará excepciones que el ErrorHandlerMiddleware capturará
+            var response = await _userAdminService.UpdateUserRoleAsync(id, dto, adminId);
+            
+            return Ok(response);
+        }
+        
     }
 }

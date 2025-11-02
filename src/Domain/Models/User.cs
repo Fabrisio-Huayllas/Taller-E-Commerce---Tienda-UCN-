@@ -63,5 +63,10 @@ namespace TiendaProyecto.src.Domain.Models
         /// Fecha de actualización del usuario.
         /// </summary>
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // R143: Campos de auditoría para cambio de roles
+        public string? LastRoleChangedBy { get; set; }
+        public DateTime? LastRoleChangedAt { get; set; }
+        public string? PreviousRole { get; set; }
     }
 }

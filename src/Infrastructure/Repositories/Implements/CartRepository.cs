@@ -66,6 +66,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             return await _context.Carts.Include(c => c.CartItems)
                                             .ThenInclude(ci => ci.Product)
+                                            .ThenInclude(p => p.Images)
                                         .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 

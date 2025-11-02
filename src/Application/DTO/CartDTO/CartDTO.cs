@@ -32,5 +32,16 @@ namespace TiendaProyecto.src.Application.DTO.CartDTO
         /// Precio total del carrito.
         /// </summary>
         public required string TotalPrice { get; set; }
+
+        /// <summary>
+        /// Ahorro total generado por descuentos aplicados (SubTotal - Total).
+        /// </summary>
+        public required string Savings { get; set; } // ✅ AGREGAR ESTA LÍNEA
+        
+        /// <summary>
+        /// Cantidad total de items en el carrito.
+        /// </summary>
+        public required int TotalQuantity { get; set; } // ✅ AGREGAR ESTA LÍNEA
+    
     }
 }

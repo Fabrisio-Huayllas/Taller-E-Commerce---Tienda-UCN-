@@ -30,7 +30,9 @@ namespace TiendaProyecto.src.Application.Mappers
                 .Map(dest => dest.UserId, src => src.UserId)
                 .Map(dest => dest.SubTotalPrice, src => src.SubTotal.ToString("C"))
                 .Map(dest => dest.Items, src => src.CartItems)
-                .Map(dest => dest.TotalPrice, src => src.Total.ToString("C"));
+                .Map(dest => dest.TotalPrice, src => src.Total.ToString("C"))
+                .Map(dest => dest.Savings, src => (src.SubTotal - src.Total).ToString("C")) // ✅ AGREGAR
+        .Map(dest => dest.TotalQuantity, src => src.CartItems.Sum(ci => ci.Quantity));
         }
 
         public void ConfigureCartItemMappings()

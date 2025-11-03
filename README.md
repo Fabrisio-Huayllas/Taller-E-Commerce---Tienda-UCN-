@@ -227,6 +227,7 @@ Antes de ejecutar el proyecto, instala lo siguiente:
 - Validación de stock antes de procesar.
 - Ajuste de cantidades según disponibilidad.
 - Preparación para conversión a orden.
+   * Nota Importante: se debe hacer el checkout y despues volver a obtener el carrito (metodo get) para proceder con la orden.
 
 ---
 

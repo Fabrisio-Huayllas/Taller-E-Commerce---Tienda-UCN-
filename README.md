@@ -1,4 +1,4 @@
-# Tienda UCN – Ecommerce Platform
+[TiendaUCN.postman_collection.json](https://github.com/user-attachments/files/23294711/TiendaUCN.postman_collection.json)# Tienda UCN – Ecommerce Platform
 
 Este proyecto implementa una **API REST** utilizando **ASP.NET Core 9** y **SQLite** para la creación de una plataforma de comercio electrónico llamada **Tienda UCN**.  
 El sistema incluye autenticación de usuarios con **JWT**, gestión de productos, carrito de compras, pedidos y subida de imágenes a **Cloudinary**.
@@ -135,6 +135,7 @@ Antes de ejecutar el proyecto, instala lo siguiente:
      }
    }
    ```
+   Nota: Asegurese que los datos de la appsettigns concuerden con lo que se ponga en el postman.
 
 6. **Restaura las dependencias:**
 
@@ -663,3 +664,2512 @@ src/
 ##  Licencia
 
 Este proyecto es desarrollado con fines académicos para la Universidad Católica del Norte.
+
+## Postman
+[Upl{
+	"info": {
+		"_postman_id": "a01c58de-b022-4e79-b2c0-134da615fe8f",
+		"name": "TiendaUCN",
+		"description": "Colección completa para probar la API de TiendaUCN. Incluye flujos de autenticación, compra y administración, con validación automática y captura de variables directamente en la colección para fácil portabilidad.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47835012",
+		"_collection_link": "https://rorrox-s-team.postman.co/workspace/Team-Workspace~63220b38-a76c-468e-8993-d31b8d288aa1/collection/47835012-a01c58de-b022-4e79-b2c0-134da615fe8f?action=share&source=collection_link&creator=47835012"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "[Auth] Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Token de Admin y UserId recibidos\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.be.a('string');",
+									"    pm.expect(jsonData.userId).to.be.a('number');",
+									"    // Guardar token y ID para flujos de admin",
+									"    pm.collectionVariables.set(\"adminToken\", jsonData.token);",
+									"    pm.collectionVariables.set(\"adminUserId\", jsonData.userId);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"Email\":\"{{testAdminEmail}}\",\r\n    \"Password\":\"{{testAdminPassword}}\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Login Cliente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Token y UserId recibidos\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.be.a('string');",
+									"    pm.expect(jsonData.userId).to.be.a('number');",
+									"    // Guardar token y ID para flujos de cliente",
+									"    pm.collectionVariables.set(\"authToken\", jsonData.token);",
+									"    pm.collectionVariables.set(\"currentUserId\", jsonData.userId);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"{{testUserEmail}}\",\r\n    \"password\":\"{{testUserPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Registrar Nuevo Usuario (Dinámico)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Genera un email único usando un timestamp",
+									"pm.collectionVariables.set(\"testUserEmail\", \"testuser_\" + Date.now() + \"@tiendaucn.com\");",
+									"pm.collectionVariables.set(\"testUserPassword\", \"TestUser123!\");",
+									"pm.collectionVariables.set(\"testUserRut\", \"11\" + Math.floor(100000 + Math.random() * 900000) + \"-K\");"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Respuesta tiene mensaje de éxito\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Registro exitoso\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"Email\":\"{{testUserEmail}}\",\r\n\"Password\":\"{{testUserPassword}}\",\r\n\"confirmPassword\":\"{{testUserPassword}}\",\r\n\"rut\": \"21382034-6\",\r\n\"firstName\": \"Rodrigo\",\r\n\"LastName\":\"Tapia\",\r\n\"BirthDate\":\"2003-01-01T19:16:50.085Z\",\r\n\"PhoneNumber\":\"123456789\",\r\n\"Gender\":\"Masculino\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Registrar Mismo Usuario (Espera Error 400/409)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 409 (Conflicto/Bad Request)\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
+									"});",
+									"pm.test(\"Respuesta indica que el usuario ya existe\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.contain(\"ya está registrado\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"Email\":\"{{testUserEmail}}\",\r\n\"Password\":\"{{testUserPassword}}\",\r\n\"confirmPassword\":\"{{testUserPassword}}\",\r\n\"rut\": \"{{testUserRut}}\",\r\n\"firstName\": \"Rodrigo (Test)\",\r\n\"LastName\":\"Tapia (Test)\",\r\n\"BirthDate\":\"2003-01-01T19:16:50.085Z\",\r\n\"PhoneNumber\":\"123456789\",\r\n\"Gender\":\"Masculino\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Verificar Email (Usar código de email)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"{{testUserEmail}}\",\r\n    \"verificationCode\":\"860355\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"verify-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Reenviar Código Verificación",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"{{testUserEmail}}\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/resend-email-verification-code",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"resend-email-verification-code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Solicitar Recuperar Contraseña",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{testUserEmail}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/recover-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"recover-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Auth] Resetear Contraseña (Usar código de email)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{testUserEmail}}\",\r\n  \"code\": \"PASTE_CODE_FROM_EMAIL\",\r\n  \"newPassword\": \"{{testUserPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Flujo 1: Sistema de Autenticación Completo. Incluye registro, verificación, login y recuperación."
+		},
+		{
+			"name": "Users (Profile)",
+			"item": [
+				{
+					"name": "[Profile] Obtener Perfil",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Perfil coincide con el usuario logueado\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(parseInt(pm.collectionVariables.get(\"currentUserId\")));",
+									"    pm.expect(jsonData.email).to.eql(pm.collectionVariables.get(\"testUserEmail\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Profile] Actualizar Perfil",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"firstName\": \"Fabrisio (Editado)\",\r\n    \"lastName\": \"Huayllas (Editado)\",\r\n    \"phoneNumber\": \"987654322\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Profile] Cambiar Contraseña",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"currentPassword\": \"{{testUserPassword}}\",\r\n  \"newPassword\": \"NewPassword123!\",\r\n  \"confirmNewPassword\": \"NewPassword123!\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Profile] Acceso Protegido con Token Inválido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 (Unauthorized)\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "untokeninvalido123",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Flujo 2: Gestión de Cuenta de Usuario (Rutas de /api/auth que manejan perfiles)"
+		},
+		{
+			"name": "Products (Customer)",
+			"item": [
+				{
+					"name": "[Products] Listar Productos (Cliente)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"La respuesta contiene lista de productos\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.products).to.be.an('array');",
+									"    // Guardar el ID del primer producto para el flujo de compra",
+									"    if (jsonData.data.products.length > 0) {",
+									"        pm.collectionVariables.set(\"productId\", jsonData.data.products[0].id); // Asumiendo que el DTO tiene 'id'",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/product/products?PageNumber=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"product",
+								"products"
+							],
+							"query": [
+								{
+									"key": "PageNumber",
+									"value": "1"
+								},
+								{
+									"key": "PageSize",
+									"value": "2",
+									"disabled": true
+								},
+								{
+									"key": "SearchTerm",
+									"value": "gorg\n",
+									"disabled": true
+								},
+								{
+									"key": "CategoryId",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "BrandId",
+									"value": "3",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Products] Ver Detalle de Producto (Cliente)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"El ID del producto coincide con el solicitado\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.id).to.eql(parseInt(pm.collectionVariables.get(\"productId\")));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5043/api/product/{{productId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5043",
+							"path": [
+								"api",
+								"product",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Flujo 5: Catálogo de Productos (Público y Cliente)"
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "[Cart] Obtener Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Respuesta de carrito obtenida\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cart",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Cart] Agregar Item al Carrito",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"El item está en el carrito\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var addedItem = jsonData.data.items.find(item => item.productId == pm.collectionVariables.get(\"productId\"));",
+									"    pm.expect(addedItem).to.not.be.undefined;",
+									"    pm.expect(addedItem.quantity).to.eql(2);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "productId",
+									"value": "{{productId}}",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "3",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cart/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Cart] Actualizar Cantidad de Item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "productId",
+									"value": "{{productId}}",
+									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "4",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/cart/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Cart] Checkout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cart/checkout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"checkout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Cart] Eliminar Item del Carrito",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cart/items/{{productId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"items",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "[Cart] Limpiar Carrito",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/cart/clear",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"cart",
+								"clear"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Flujo 3: Sistema de Carrito de Compras (Requiere Auth de Cliente)"
+		},
+		{
+			"name": "Orders (Customer & Admin)",
+			"item": [
+				{
+					"name": "Flujo Cliente",
+					"item": [
+						{
+							"name": "[Orders] Crear Orden (requiere items en carrito)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201 (Created)\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"pm.test(\"Respuesta contiene el código de la orden\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data).to.be.a('string');",
+											"    // Guardar el código de la orden para verificarla",
+											"    pm.collectionVariables.set(\"orderCode\", jsonData.data);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{authToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/orders/create",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"orders",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Orders] Verificar que el Carrito está vacío (Post-Orden)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"pm.test(\"El carrito ahora está vacío\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data.items).to.be.an('array').and.be.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{authToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/cart",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"cart"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Orders] Consultar Historial de Órdenes (Cliente)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"pm.test(\"La nueva orden aparece en el historial\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    var newOrder = jsonData.data.orders.find(order => order.code == pm.collectionVariables.get(\"orderCode\"));",
+											"    pm.expect(newOrder).to.not.be.undefined;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{authToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/orders/user-orders?PageNumber=1&PageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"orders",
+										"user-orders"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "5"
+										},
+										{
+											"key": "status",
+											"value": null,
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Orders] Consultar Detalle de Orden (Cliente)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{authToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/orders/detail/{{orderCode}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"orders",
+										"detail",
+										"{{orderCode}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Flujo Admin",
+					"item": [
+						{
+							"name": "[Orders Admin] Listar Órdenes (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/orders/admin/list?PageNumber=1&PageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"orders",
+										"admin",
+										"list"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "5"
+										},
+										{
+											"key": "status",
+											"value": null,
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Orders Admin] Cambiar Estado Orden (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"status\": \"Shipped\",\r\n  \"note\": \"Enviado por DHL\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/orders/admin/{{orderCode}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"orders",
+										"admin",
+										"{{orderCode}}",
+										"status"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"description": "Flujo 4 y 8: Gestión de pedidos del cliente y admin (rutas en /api/orders/)"
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Admin Products",
+					"item": [
+						{
+							"name": "[Admin Prod] Crear Producto",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Variables para crear producto",
+											"pm.collectionVariables.set(\"testProductName\", \"Laptop Test \" + Date.now());",
+											"pm.collectionVariables.set(\"testProductPrice\", Math.floor(100000 + Math.random() * 900000));"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201 (Created)\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"pm.test(\"Respuesta contiene el ID del nuevo producto\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data).to.be.a('string');",
+											"    // Guardar el ID del producto para usarlo en actualizar/eliminar",
+											"    pm.collectionVariables.set(\"newProductId\", jsonData.data);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "Title",
+											"value": "{{testProductName}}",
+											"type": "text"
+										},
+										{
+											"key": "Description",
+											"value": "Salsa preparda en lata",
+											"type": "text"
+										},
+										{
+											"key": "Price",
+											"value": "{{testProductPrice}}",
+											"type": "text"
+										},
+										{
+											"key": "Stock",
+											"value": "10",
+											"type": "text"
+										},
+										{
+											"key": "Status",
+											"value": "New",
+											"type": "text"
+										},
+										{
+											"key": "Discount",
+											"value": "0",
+											"type": "text"
+										},
+										{
+											"key": "CategoryName",
+											"value": "Test Category",
+											"type": "text"
+										},
+										{
+											"key": "BrandName",
+											"value": "Test Brand",
+											"type": "text"
+										},
+										{
+											"key": "Images",
+											"type": "file",
+											"src": "/C:/Users/rorro/Downloads/bde2db98b2b73987278cfb8f3f12f557.jpg"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/product",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Listar Productos (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/product/admin/products?PageNumber=1&PageSize=50",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product",
+										"admin",
+										"products"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "50"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Ver Detalle Producto Creado (Admin)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"pm.test(\"El ID del producto coincide con el solicitado\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data.id).to.eql(parseInt(pm.collectionVariables.get(\"newProductId\")));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/product/admin/{{newProductId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"product",
+										"admin",
+										"{{newProductId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Actualizar Producto",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{testProductName}} (Actualizado)\",\r\n    \"description\": \"Ps5 y dos juegos.\",\r\n    \"price\": 15000,\r\n    \"stock\": 20,\r\n    \"categoryId\": 1,\r\n    \"brandId\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/product/admin/products/{{newProductId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"product",
+										"admin",
+										"products",
+										"{{newProductId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Actualizar Descuento",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"discountPercent\": 20\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/product/admin/products/{{newProductId}}/discount",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"product",
+										"admin",
+										"products",
+										"{{newProductId}}",
+										"discount"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Activar/Desactivar Producto",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/product/{{newProductId}}/toggle-active",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"product",
+										"{{newProductId}}",
+										"toggle-active"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Subir Imágenes (extra)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "files",
+											"type": "file",
+											"src": "/C:/Users/rorro/Downloads/w=800,h=800,fit=pad.webp"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/product/{{newProductId}}/images",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product",
+										"{{newProductId}}",
+										"images"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Eliminar Imagen (requiere imageId)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/product/{{newProductId}}/images/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product",
+										"{{newProductId}}",
+										"images",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Eliminar Producto",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/product/admin/products/{{newProductId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product",
+										"admin",
+										"products",
+										"{{newProductId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Prod] Acceso Denegado (Cliente a Admin)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 403 (Forbidden)\", function () {",
+											"    pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{authToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/product/admin/products?PageNumber=1&PageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"product",
+										"admin",
+										"products"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin Categories",
+					"item": [
+						{
+							"name": "[Admin Cat] Crear Categoría",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"newCategoryName\", \"Test Category \" + Date.now());"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201 (Created)\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"var jsonData = pm.response.json();",
+											"pm.collectionVariables.set(\"newCategoryId\", jsonData.data.id);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newCategoryName}}\",\r\n  \"description\": \"Dispositivos tecnológicos y gadgets\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/category",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"category"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Cat] Listar Categorías",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/category?PageNumber=1&PageSize=10&SearchTerm=",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"category"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "10"
+										},
+										{
+											"key": "SearchTerm",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Cat] Obtener Categoría por ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/admin/category/{{newCategoryId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"category",
+										"{{newCategoryId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Cat] Actualizar Categoría",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newCategoryName}} (Actualizada)\",\r\n  \"description\": \"helado\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/category/{{newCategoryId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"category",
+										"{{newCategoryId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Cat] Eliminar Categoría",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/category/{{newCategoryId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"category",
+										"{{newCategoryId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin Brands",
+					"item": [
+						{
+							"name": "[Admin Brand] Crear Marca",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.collectionVariables.set(\"newBrandName\", \"Test Brand \" + Date.now());"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201 (Created)\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"var jsonData = pm.response.json();",
+											"pm.collectionVariables.set(\"newBrandId\", jsonData.data.id);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newBrandName}}\",\r\n  \"description\": \"Marca china de tecnología innovadora\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/brand",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"brand"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Brand] Listar Marcas",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/brand?PageNumber=1&PageSize=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"brand"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "10"
+										},
+										{
+											"key": "SearchTerm",
+											"value": null,
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Brand] Obtener Marca por ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/admin/brand/{{newBrandId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"brand",
+										"{{newBrandId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Brand] Actualizar Marca",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newBrandName}} (Actualizada)\",\r\n  \"description\": \"Empresa multinacional china de electrónicos y tecnología\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/brand/{{newBrandId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"brand",
+										"{{newBrandId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Brand] Eliminar Marca",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/brand/{{newBrandId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"brand",
+										"{{newBrandId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin Users",
+					"item": [
+						{
+							"name": "[Admin Users] Listar Usuarios",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/users?PageNumber=1&PageSize=5&Role=&Status=&Email=&CreatedFrom&OrderBy=&OrderDir=",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"users"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "5"
+										},
+										{
+											"key": "Role",
+											"value": ""
+										},
+										{
+											"key": "Status",
+											"value": ""
+										},
+										{
+											"key": "Email",
+											"value": ""
+										},
+										{
+											"key": "CreatedFrom",
+											"value": null
+										},
+										{
+											"key": "CreatedTo",
+											"value": "2024-12-31",
+											"disabled": true
+										},
+										{
+											"key": "OrderBy",
+											"value": ""
+										},
+										{
+											"key": "OrderDir",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Users] Ver Detalle Usuario",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/{{currentUserId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"{{currentUserId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Users] Actualizar Rol Usuario",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"role\": \"Admin\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/{{currentUserId}}/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"{{currentUserId}}",
+										"role"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Users] Actualizar Estado Usuario (Bloquear)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"status\": \"Blocked\",\r\n    \"reason\": \"Prueba de bloqueo\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/{{currentUserId}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"{{currentUserId}}",
+										"status"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin Orders (Rutas /api/admin/orders)",
+					"item": [
+						{
+							"name": "[Admin Orders] Listar Órdenes (api/admin/orders)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/orders?PageNumber=1&PageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"orders"
+									],
+									"query": [
+										{
+											"key": "PageNumber",
+											"value": "1"
+										},
+										{
+											"key": "PageSize",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Orders] Ver Detalle Orden (api/admin/orders)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/orders/{{orderCode}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"orders",
+										"{{orderCode}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "[Admin Orders] Actualizar Estado Orden (api/admin/orders)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"status\": \"Shipped\",\r\n  \"note\": \"Enviado por DHL\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/orders/{{orderCode}}/status",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"admin",
+										"orders",
+										"{{orderCode}}",
+										"status"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"description": "Flujos 6, 7, 8 y 9: Administración de Productos, Categorías, Marcas, Órdenes y Usuarios."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api"
+		},
+		{
+			"key": "authToken",
+			"value": ""
+		},
+		{
+			"key": "adminToken",
+			"value": ""
+		},
+		{
+			"key": "currentUserId",
+			"value": ""
+		},
+		{
+			"key": "productId",
+			"value": "1"
+		},
+		{
+			"key": "orderId",
+			"value": "1"
+		},
+		{
+			"key": "testUserEmail",
+			"value": "customer-{{$timestamp}}@test.com"
+		},
+		{
+			"key": "testUserPassword",
+			"value": "TestUser123!"
+		},
+		{
+			"key": "testAdminEmail",
+			"value": "admin@tiendaucn.cl"
+		},
+		{
+			"key": "testAdminPassword",
+			"value": "Admin123!"
+		},
+		{
+			"key": "testProductName",
+			"value": "Postman Test Product {{$timestamp}}"
+		},
+		{
+			"key": "testProductPrice",
+			"value": "19990"
+		},
+		{
+			"key": "verificationCode",
+			"value": "123456"
+		},
+		{
+			"key": "verifiedUserEmail",
+			"value": "cliente@test.com"
+		},
+		{
+			"key": "verifiedUserPassword",
+			"value": "Cliente123!"
+		},
+		{
+			"key": "newProductId",
+			"value": ""
+		},
+		{
+			"key": "newCategoryId",
+			"value": "1"
+		},
+		{
+			"key": "newBrandId",
+			"value": "1"
+		},
+		{
+			"key": "newImageId",
+			"value": "1"
+		},
+		{
+			"key": "targetUserId",
+			"value": "2"
+		},
+		{
+			"key": "tempCategoryId",
+			"value": ""
+		},
+		{
+			"key": "tempBrandId",
+			"value": ""
+		},
+		{
+			"key": "newAuthToken",
+			"value": ""
+		},
+		{
+			"key": "adminCategoryId",
+			"value": "1"
+		},
+		{
+			"key": "adminBrandId",
+			"value": "1"
+		},
+		{
+			"key": "adminProductId",
+			"value": ""
+		},
+		{
+			"key": "adminUserId",
+			"value": ""
+		},
+		{
+			"key": "testUserRut",
+			"value": ""
+		},
+		{
+			"key": "newBrandName",
+			"value": ""
+		},
+		{
+			"key": "newCategoryName",
+			"value": ""
+		},
+		{
+			"key": "orderCode",
+			"value": ""
+		}
+	]
+}oading TiendaUCN.postman_collection.json…]()
+
+

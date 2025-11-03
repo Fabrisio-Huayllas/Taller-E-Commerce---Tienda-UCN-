@@ -655,7 +655,7 @@ src/
 
 - **Sebastian Hernandez** - 21.701.267-8 - sebastian.hernandez02@alumnos.ucn.cl
 - **Fabrisio Huayllas** - 22.108.928-6 - fabrisio.huayllas02@alumnos.ucn.cl
-- **Rodrigo Tapia** - 21.382.034-6 - [rodrigo04@alumnos.ucn.cl]
+- **Rodrigo Tapia** - 21.382.034-6 - rodrigo04@alumnos.ucn.cl
 
 ---
 

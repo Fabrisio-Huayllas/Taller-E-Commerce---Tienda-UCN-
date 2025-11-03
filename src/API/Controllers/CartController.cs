@@ -25,7 +25,7 @@ namespace TiendaProyecto.src.API.Controllers
         /// </summary>
         /// <returns>El carrito de compras del comprador actual.</returns>
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> GetCart()
         {
             var buyerId = GetBuyerId();
@@ -41,7 +41,7 @@ namespace TiendaProyecto.src.API.Controllers
         /// <param name="addCartItemDTO">El DTO con la información del item a agregar.</param>
         /// <returns>El carrito de compras actualizado.</returns>
         [HttpPost("items")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> AddItem([FromForm] AddCartItemDTO addCartItemDTO)
         {
             var buyerId = GetBuyerId();
@@ -57,7 +57,7 @@ namespace TiendaProyecto.src.API.Controllers
         /// <param name="productId">El ID del producto a eliminar.</param>
         /// <returns>El carrito de compras actualizado.</returns>
         [HttpDelete("items/{productId}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> RemoveItem(int productId)
         {
             var buyerId = GetBuyerId();
@@ -72,7 +72,7 @@ namespace TiendaProyecto.src.API.Controllers
         /// </summary>
         /// <returns>El carrito de compras actualizado.</returns>
         [HttpPost("clear")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> ClearCart()
         {
             var buyerId = GetBuyerId();
@@ -88,7 +88,7 @@ namespace TiendaProyecto.src.API.Controllers
         /// <param name="changeItemQuantityDTO">Id del item y cantidad nueva</param>
         /// <returns>Resultado con el carrito de compras actualizado.</returns>
         [HttpPatch("items")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> UpdateItemQuantity([FromForm] ChangeItemQuantityDTO changeItemQuantityDTO)
         {
             var buyerId = GetBuyerId();
@@ -110,7 +110,10 @@ namespace TiendaProyecto.src.API.Controllers
             var userId = User.Identity?.IsAuthenticated == true ? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value : null;
             var parsedUserId = userId != null && int.TryParse(userId, out int id) ? id : (int?)null;
             var result = await _cartService.CheckoutAsync(buyerId, parsedUserId);
-            return Ok(new GenericResponse<CartDTO>("Checkout realizado exitosamente", result));
+            string message = result.HasWarnings 
+                ? "Checkout realizado con advertencias. Revisa los cambios en tu carrito." 
+                : "Checkout realizado exitosamente.";
+            return Ok(new GenericResponse<CartCheckoutResultDTO>(message, result));
         }
 
         /// <summary>

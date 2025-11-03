@@ -12,6 +12,8 @@ using Microsoft.OpenApi.Models;
 using Resend;
 using Serilog;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using TiendaProyecto.src.Application.Jobs.Implements;
 using TiendaProyecto.src.Application.Mappers;
 using TiendaProyecto.src.Application.Services.Implements;
@@ -43,6 +45,13 @@ var connectionString = builder.Configuration.GetConnectionString("SqliteDatabase
 
 // Agregar servicios de controllers y validación automática
 builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+    {
+        // Aceptar enums como strings (por ejemplo: "Shipped")
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        // Ignorar mayúsculas/minúsculas en las propiedades JSON
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -75,6 +84,7 @@ builder.Services.AddControllers()
 #region Email Service Configuration
 Log.Information("Configurando servicio de Email");
 builder.Services.AddOptions();
+builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
 {
@@ -123,6 +133,15 @@ builder.Services.AddAuthentication(options =>
 //Mappers
 builder.Services.AddScoped<ProductMapper>();
 builder.Services.AddScoped<UserMapper>();
+builder.Services.AddScoped<CartMapper>();
+builder.Services.AddScoped<OrderMapper>();
+builder.Services.AddScoped<CategoryMapper>();
+builder.Services.AddScoped<BrandMapper>();
+builder.Services.AddScoped<UserAdminMapper>();
+
+// Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 
 // Activar FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -137,8 +156,15 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
-
-
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 
 // Configurar Swagger/OpenAPI
@@ -191,7 +217,21 @@ builder.Services.AddHangfireServer();
 
 #endregion
 
+// Agregar política de autorización para administradores
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("Admin", p => p.RequireRole("Admin"));
+});
+
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+   
+});
+
 var app = builder.Build();
+
 // Configurar el panel de control de Hangfire
 app.UseHangfireDashboard(builder.Configuration["HangfireDashboard:DashboardPath"] ?? throw new InvalidOperationException("La ruta de hangfire no ha sido declarada"), new DashboardOptions
 {
@@ -225,15 +265,16 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<CorrelationMidware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
+
 // Activar Swagger solo en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<CartMiddleware>();
 app.MapControllers();
 app.Run();

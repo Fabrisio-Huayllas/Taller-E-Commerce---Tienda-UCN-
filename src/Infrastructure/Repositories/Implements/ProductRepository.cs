@@ -43,13 +43,32 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con la marca creada o encontrada.</returns>
         public async Task<Brand> CreateOrGetBrandAsync(string brandName)
         {
-            var brand = await _context.Brands
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Name.ToLower() == brandName.ToLower());
+            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Name == brandName);
 
-            if (brand != null) { return brand; }
-            brand = new Brand { Name = brandName };
-            await _context.Brands.AddAsync(brand);
+            if (brand != null)
+            {
+                return brand;
+            }
+
+            // Generar slug para la nueva marca
+            var slug = GenerateSlug(brandName);
+
+            // Verificar que el slug sea único
+            var counter = 1;
+            var originalSlug = slug;
+            while (await _context.Brands.AnyAsync(b => b.Slug == slug))
+            {
+                slug = $"{originalSlug}-{counter}";
+                counter++;
+            }
+
+            brand = new Brand
+            {
+                Name = brandName,
+                Slug = slug
+            };
+
+            _context.Brands.Add(brand);
             await _context.SaveChangesAsync();
             return brand;
         }
@@ -61,15 +80,51 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con la categoría creada o encontrada.</returns>
         public async Task<Category> CreateOrGetCategoryAsync(string categoryName)
         {
-            var category = await _context.Categories
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == categoryName.ToLower());
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == categoryName);
 
-            if (category != null) { return category; }
-            category = new Category { Name = categoryName };
-            await _context.Categories.AddAsync(category);
+            if (category != null)
+            {
+                return category;
+            }
+
+            // Generar slug para la nueva categoría
+            var slug = GenerateSlug(categoryName);
+
+            // Verificar que el slug sea único
+            var counter = 1;
+            var originalSlug = slug;
+            while (await _context.Categories.AnyAsync(c => c.Slug == slug))
+            {
+                slug = $"{originalSlug}-{counter}";
+                counter++;
+            }
+
+            category = new Category
+            {
+                Name = categoryName,
+                Slug = slug
+            };
+
+            _context.Categories.Add(category);
             await _context.SaveChangesAsync();
             return category;
+        }
+
+        /// <summary>
+        /// Genera un slug normalizado a partir de un nombre.
+        /// </summary>
+        /// <param name="name">Nombre de la categoría</param>
+        /// <returns>Slug normalizado</returns>
+        private static string GenerateSlug(string name)
+        {
+            // Convertir a minúsculas
+            var slug = name.ToLowerInvariant();
+
+            // Reemplazar espacios y caracteres especiales con guiones
+            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s-]", "");
+            slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[\s-]+", "-").Trim('-');
+
+            return slug;
         }
 
         /// <summary>
@@ -81,7 +136,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             return await _context.Products.
                                         AsNoTracking().
-                                        Where(p => p.Id == id && p.IsAvailable).
+                                        Where(p => p.Id == id && p.IsAvailable&& !p.IsDeleted).
                                         Include(p => p.Category).
                                         Include(p => p.Brand).
                                         Include(p => p.Images)
@@ -97,7 +152,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             return await _context.Products.
                                         AsNoTracking().
-                                        Where(p => p.Id == id).
+                                        Where(p => p.Id == id&& !p.IsDeleted).
                                         Include(p => p.Category).
                                         Include(p => p.Brand).
                                         Include(p => p.Images)
@@ -112,6 +167,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         public async Task<(IEnumerable<Product> products, int totalCount)> GetFilteredForAdminAsync(SearchParamsDTO searchParams)
         {
             var query = _context.Products
+                .Where(p => !p.IsDeleted) 
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1)) // Cargamos la URL de la imagen principal a la hora de crear el producto
@@ -144,14 +200,14 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         }
 
         /// <summary>
-        /// Retorna una lista de productos para el cliente con los parámetros de búsqueda especificados.
+        /// Retorna una lista de productos para el cliente with los parámetros de búsqueda especificados.
         /// </summary>
         /// <param name="searchParams">Parámetros de búsqueda para filtrar los productos.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con una lista de productos para el cliente y el conteo total de productos.</returns>
         public async Task<(IEnumerable<Product> products, int totalCount)> GetFilteredForCustomerAsync(SearchParamsDTO searchParams)
         {
             var query = _context.Products
-                .Where(p => p.IsAvailable)
+                .Where(p => p.IsAvailable && !p.IsDeleted)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1))
@@ -190,7 +246,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         /// <returns>Una tarea que representa la operación asíncrona, con el stock real del producto.</returns>
         public async Task<int> GetRealStockAsync(int productId)
         {
-            return await _context.Products.AsNoTracking().Where(p => p.Id == productId).Select(p => p.Stock).FirstOrDefaultAsync();
+            return await _context.Products.AsNoTracking().Where(p => p.Id == productId && !p.IsDeleted).Select(p => p.Stock).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -216,15 +272,84 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         }
 
         public async Task<int> CountFilteredAsync(SearchParamsDTO searchParams)
-    {
-        var query = _context.Products.AsQueryable();
-
-        if (!string.IsNullOrEmpty(searchParams.SearchTerm))
         {
-            query = query.Where(p => p.Title.Contains(searchParams.SearchTerm));
+            var query = _context.Products.Where(p => !p.IsDeleted);
+
+            if (!string.IsNullOrEmpty(searchParams.SearchTerm))
+            {
+                query = query.Where(p => p.Title.Contains(searchParams.SearchTerm));
+            }
+
+            return await query.CountAsync();
         }
 
-        return await query.CountAsync();
-    }
+        public IQueryable<Product> Query()
+        {
+            return _context.Products.Where(p => !p.IsDeleted);
+        }
+        public async Task UpdateAsync(Product product)
+        {
+            if (product == null) throw new ArgumentNullException(nameof(product));
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+        }
+        public async Task SoftDeleteAsync(int id)
+        {
+            await _context.Products
+                .Where(p => p.Id == id && !p.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(p => p.IsDeleted, true)
+                    .SetProperty(p => p.DeletedAt, DateTime.UtcNow)
+                    .SetProperty(p => p.IsAvailable, false));
+        }
+        /// <summary>
+        /// Agrega imágenes a la base de datos (R92).
+        /// </summary>
+        public async Task AddImagesAsync(List<Image> images)
+        {
+            await _context.Images.AddRangeAsync(images);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Obtiene una imagen por su ID.
+        /// </summary>
+        public async Task<Image?> GetImageByIdAsync(int imageId)
+        {
+            return await _context.Images
+                .FirstOrDefaultAsync(i => i.Id == imageId);
+        }
+
+        /// <summary>
+        /// Elimina una imagen de la base de datos (R93).
+        /// </summary>
+        public async Task DeleteImageAsync(int imageId)
+        {
+            await _context.Images
+                .Where(i => i.Id == imageId)
+                .ExecuteDeleteAsync();
+        }
+
+        /// <summary>
+        /// Obtiene todas las imágenes de un producto.
+        /// </summary>
+        public async Task<List<Image>> GetProductImagesAsync(int productId)
+        {
+            return await _context.Images
+                .Where(i => i.ProductId == productId)
+                .OrderBy(i => i.CreatedAt)
+                .ToListAsync();
+        }
+
+         public async Task<Category?> GetCategoryByIdAsync(int categoryId)
+        {
+            return await _context.Categories.FindAsync(categoryId);
+        }
+
+        public async Task<Brand?> GetBrandByIdAsync(int brandId)
+        {
+            return await _context.Brands.FindAsync(brandId);
+        }
+
     }
 }

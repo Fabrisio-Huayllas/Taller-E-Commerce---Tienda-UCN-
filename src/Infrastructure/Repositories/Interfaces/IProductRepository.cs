@@ -79,5 +79,40 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Interfaces
         Task<Product?> GetByIdForAdminAsync(int id);
 
         Task<int> CountFilteredAsync(SearchParamsDTO searchParams);
+        IQueryable<Product> Query();
+
+        Task UpdateAsync(Product product);
+
+        // <summary>
+        /// Realiza una eliminación lógica de un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar lógicamente.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task SoftDeleteAsync(int id);
+
+        /// <summary>
+        /// Agrega imágenes a la base de datos.
+        /// </summary>
+        Task AddImagesAsync(List<Image> images);
+
+        /// <summary>
+        /// Obtiene una imagen por su ID.
+        /// </summary>
+        Task<Image?> GetImageByIdAsync(int imageId);
+
+        /// <summary>
+        /// Elimina una imagen de la base de datos.
+        /// </summary>
+        Task DeleteImageAsync(int imageId);
+
+        /// <summary>
+        /// Obtiene todas las imágenes de un producto.
+        /// </summary>
+        Task<List<Image>> GetProductImagesAsync(int productId);
+
+        Task<Category?> GetCategoryByIdAsync(int categoryId);
+        Task<Brand?> GetBrandByIdAsync(int brandId);
+
+
     }
 }

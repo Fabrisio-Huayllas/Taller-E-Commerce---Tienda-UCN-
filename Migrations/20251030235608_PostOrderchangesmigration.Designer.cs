@@ -8,11 +8,11 @@ using TiendaProyecto.src.Infrastructure.Data;
 
 #nullable disable
 
-namespace TiendaProyecto.src.Infrastructure.Data.Migrations
+namespace TiendaProyecto.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250919213845_InitialMigrate")]
-    partial class InitialMigrate
+    [Migration("20251030235608_PostOrderchangesmigration")]
+    partial class PostOrderchangesmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -128,8 +128,21 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -200,8 +213,21 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -242,11 +268,23 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ChangeReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ChangedByAdminId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("StatusChangedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SubTotal")
@@ -320,6 +358,9 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -328,6 +369,9 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsAvailable")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Price")
@@ -607,13 +651,13 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
             modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Product", b =>
                 {
                     b.HasOne("TiendaProyecto.src.Domain.Models.Brand", "Brand")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("BrandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TiendaProyecto.src.Domain.Models.Category", "Category")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -632,9 +676,19 @@ namespace TiendaProyecto.src.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Brand", b =>
+                {
+                    b.Navigation("Products");
+                });
+
             modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Cart", b =>
                 {
                     b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Category", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("TiendaProyecto.src.Domain.Models.Order", b =>

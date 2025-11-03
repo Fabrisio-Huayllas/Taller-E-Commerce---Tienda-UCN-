@@ -27,7 +27,7 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// </summary>
         /// <param name="id">El ID del producto a buscar.</param>
         /// <returns>Una tarea que representa la operación asíncrona, con el producto encontrado o null si no se encuentra.</returns>
-        Task<ProductDetailDTO> GetByIdAsync(int id);
+        ///Task<ProductDetailDTO> GetByIdAsync(int id);
 
         /// <summary>
         /// Retorna un producto específico por su ID desde el punto de vista de un admin.
@@ -49,7 +49,35 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// <param name="id">El ID del producto cuyo estado se cambiará.</param>
         Task ToggleActiveAsync(int id);
 
-         Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams);
+        Task<int> CountFilteredForAdminAsync(SearchParamsDTO searchParams);
+
+        Task UpdateAsync(int id, UpdateProductDTO updateProductDTO);
+
+        /// <summary>
+        /// Elimina lógicamente un producto por su ID.
+        /// </summary>
+        /// <param name="id">El ID del producto a eliminar.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task DeleteAsync(int id);
+        
+        /// <summary>
+        /// Agrega imágenes a un producto.
+        /// </summary>
+        Task<List<Image>> AddImagesAsync(int productId, List<IFormFile> files);
+
+        /// <summary>
+        /// Elimina una imagen de un producto.
+        /// </summary>
+        Task DeleteImageAsync(int productId, int imageId);
+
+        /// <summary>
+        /// Actualiza el descuento de un producto.
+        /// </summary>
+        /// <param name="id">ID del producto.</param>
+        /// <param name="discountDto">DTO con el porcentaje de descuento.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        Task UpdateDiscountAsync(int id, ProductDiscountUpdateDTO discountDto);
+        Task<ProductForCustomerDTO> GetByIdForCustomerAsync(int id);
     }
 
 }

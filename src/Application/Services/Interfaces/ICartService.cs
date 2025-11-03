@@ -66,6 +66,6 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// <param name="buyerId">ID del comprador.</param>
         /// <param name="userId">ID del usuario.</param>
         /// <returns>Tarea que representa la operación asincrónica retornando un objeto CartDTO.</returns>
-        Task<CartDTO> CheckoutAsync(string buyerId, int? userId);
+        Task<CartCheckoutResultDTO> CheckoutAsync(string buyerId, int? userId);
     }
 }

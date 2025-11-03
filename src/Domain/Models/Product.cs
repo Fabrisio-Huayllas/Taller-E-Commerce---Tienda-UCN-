@@ -79,6 +79,17 @@ namespace TiendaProyecto.src.Domain.Models
         public ICollection<Image> Images { get; set; } = new List<Image>();
 
         /// <summary>
+        /// Indica si el producto ha sido eliminado lógicamente.
+        /// </summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>
+        /// Fecha y hora en que el producto fue eliminado lógicamente.
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+
+        /// <summary>
         /// Fecha de creación del producto.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -87,5 +98,11 @@ namespace TiendaProyecto.src.Domain.Models
         /// Fecha de actualización del producto.
         /// </summary>
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+            /// Precio final del producto después de aplicar el descuento.
+            /// </summary>
+            public int FinalPrice => (int)(Price * (1 - (decimal)Discount / 100));
+        
     }
 }

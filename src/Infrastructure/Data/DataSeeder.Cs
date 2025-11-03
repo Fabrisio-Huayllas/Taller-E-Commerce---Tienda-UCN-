@@ -54,13 +54,13 @@ namespace TiendaProyecto.src.Infrastructure.Data
                 if (!context.Categories.Any())
                 {
                     var categories = new List<Category>
-                            {
-                                new Category { Name = "Electronics" },
-                                new Category { Name = "Clothing" },
-                                new Category { Name = "Home Appliances" },
-                                new Category { Name = "Books" },
-                                new Category { Name = "Sports" }
-                            };
+                    {
+                        new Category { Name = "Electronics", Slug = "electronics" },
+                        new Category { Name = "Clothing", Slug = "clothing" },
+                        new Category { Name = "Home Appliances", Slug = "home-appliances" },
+                        new Category { Name = "Books", Slug = "books" },
+                        new Category { Name = "Sports", Slug = "sports" }
+                    };
                     await context.Categories.AddRangeAsync(categories);
                     await context.SaveChangesAsync();
                     Log.Information("Categorías creadas con éxito.");
@@ -70,11 +70,13 @@ namespace TiendaProyecto.src.Infrastructure.Data
                 if (!await context.Brands.AnyAsync())
                 {
                     var brands = new List<Brand>
-                        {
-                            new Brand { Name = "Sony" },
-                            new Brand { Name = "Apple" },
-                            new Brand { Name = "HP" }
-                        };
+                    {
+                        new Brand { Name = "Sony", Slug = "sony" },
+                        new Brand { Name = "Apple", Slug = "apple" },
+                        new Brand { Name = "HP", Slug = "hp" },
+                        new Brand { Name = "Samsung", Slug = "samsung" },
+                        new Brand { Name = "Nike", Slug = "nike" }
+                    };
                     await context.Brands.AddRangeAsync(brands);
                     await context.SaveChangesAsync();
                     Log.Information("Marcas creadas con éxito.");

@@ -28,8 +28,17 @@ namespace TiendaProyecto.src.Application.Services.Implements
 
         public async Task<ListedBrandsDTO> GetAllAsync(SearchParamsDTO searchParams)
         {
-            var (brands, totalCount) = await _brandRepository.GetAllAsync(searchParams);
+            // Establecer valores por defecto
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber < 1) pageNumber = 1;
+            
             var pageSize = searchParams.PageSize ?? _defaultPageSize;
+            
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
+            
+            var (brands, totalCount) = await _brandRepository.GetAllAsync(searchParams);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var brandDtos = new List<BrandDetailDTO>();
@@ -46,7 +55,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Brands = brandDtos,
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                CurrentPage = searchParams.PageNumber,
+                CurrentPage = pageNumber,
                 PageSize = pageSize
             };
         }

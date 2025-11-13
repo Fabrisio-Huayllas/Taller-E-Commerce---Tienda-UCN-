@@ -181,20 +181,14 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
         {
             var query = _context.Users.AsNoTracking();
 
+            // Capturar el tiempo actual antes de usarlo en la consulta
+            var currentTime = DateTimeOffset.UtcNow;
+
             // Filtro por email (búsqueda parcial)
             if (!string.IsNullOrWhiteSpace(searchParams.Email))
             {
                 var emailSearch = searchParams.Email.Trim().ToLower();
                 query = query.Where(u => u.Email!.ToLower().Contains(emailSearch));
-            }
-
-            // Filtro por estado (activo/bloqueado)
-            if (!string.IsNullOrWhiteSpace(searchParams.Status))
-            {
-                if (searchParams.Status.ToLower() == "active")
-                    query = query.Where(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.UtcNow);
-                else if (searchParams.Status.ToLower() == "blocked")
-                    query = query.Where(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow);
             }
 
             // Filtro por rango de fechas de creación
@@ -218,40 +212,55 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 }
             }
 
-            var totalCount = await query.CountAsync();
+            // Materializar la consulta antes de aplicar filtro de estado (problema con DateTimeOffset en SQLite)
+            var allUsers = await query.ToListAsync();
 
-            // Ordenamiento con whitelist
-            var allowedOrderFields = new[] { "createdAt", "lastLogin", "email" };
+            // Aplicar filtro por estado en memoria
+            IEnumerable<User> filteredUsers = allUsers;
+            if (!string.IsNullOrWhiteSpace(searchParams.Status))
+            {
+                var statusLower = searchParams.Status.ToLower();
+                if (statusLower == "active")
+                    filteredUsers = allUsers.Where(u => !u.LockoutEnd.HasValue || u.LockoutEnd.Value <= currentTime);
+                else if (statusLower == "blocked")
+                    filteredUsers = allUsers.Where(u => u.LockoutEnd.HasValue && u.LockoutEnd.Value > currentTime);
+            }
+
+            var totalCount = filteredUsers.Count();
+
+            // Ordenamiento con whitelist (todas las opciones en minúsculas para comparación)
+            var allowedOrderFields = new[] { "createdat", "lastlogin", "email" };
             var orderBy = searchParams.OrderBy?.ToLower();
             var orderDir = searchParams.OrderDir?.ToLower() ?? "desc";
 
             if (!string.IsNullOrWhiteSpace(orderBy) && allowedOrderFields.Contains(orderBy))
             {
-                query = orderBy switch
+                filteredUsers = orderBy switch
                 {
                     "createdat" => orderDir == "asc"
-                        ? query.OrderBy(u => u.RegisteredAt)
-                        : query.OrderByDescending(u => u.RegisteredAt),
+                        ? filteredUsers.OrderBy(u => u.RegisteredAt)
+                        : filteredUsers.OrderByDescending(u => u.RegisteredAt),
                     "lastlogin" => orderDir == "asc"
-                        ? query.OrderBy(u => u.LastLoginTime)
-                        : query.OrderByDescending(u => u.LastLoginTime),
+                        ? filteredUsers.OrderBy(u => u.LastLoginTime)
+                        : filteredUsers.OrderByDescending(u => u.LastLoginTime),
                     "email" => orderDir == "asc"
-                        ? query.OrderBy(u => u.Email)
-                        : query.OrderByDescending(u => u.Email),
-                    _ => query.OrderByDescending(u => u.RegisteredAt)
+                        ? filteredUsers.OrderBy(u => u.Email)
+                        : filteredUsers.OrderByDescending(u => u.Email),
+                    _ => filteredUsers.OrderByDescending(u => u.RegisteredAt)
                 };
             }
             else
             {
-                query = query.OrderByDescending(u => u.RegisteredAt);
+                filteredUsers = filteredUsers.OrderByDescending(u => u.RegisteredAt);
             }
 
             // Paginación
+            var pageNumber = searchParams.PageNumber ?? 1;
             var pageSize = searchParams.PageSize ?? 10;
-            var users = await query
-                .Skip((searchParams.PageNumber - 1) * pageSize)
+            var users = filteredUsers
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             return (users, totalCount);
         }

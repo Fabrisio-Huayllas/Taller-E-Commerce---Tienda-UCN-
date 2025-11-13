@@ -154,20 +154,25 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// </summary>
         public async Task<ListedOrderDetailDTO> GetByUserIdAsync(SearchParamsDTO searchParams, int userId)
         {
-            if (searchParams.PageNumber <= 0)
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber <= 0)
             {
-                searchParams.PageNumber = 1;
+                pageNumber = 1;
             }
 
             int pageSize = searchParams.PageSize ?? _defaultPageSize;
             int maxPageSize = 100;
             if (pageSize > maxPageSize) pageSize = maxPageSize;
 
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
+
             // delegar a orderrepository
             var (orders, totalCount) = await _orderRepository.GetByUserIdAsync(searchParams, userId);
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            var currentPage = searchParams.PageNumber > totalPages && totalPages > 0 ? totalPages : searchParams.PageNumber;
+            var currentPage = pageNumber > totalPages && totalPages > 0 ? totalPages : pageNumber;
 
             var dto = new ListedOrderDetailDTO
             {
@@ -204,11 +209,16 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// </summary>
         public async Task<ListedOrdersForAdminDTO> GetAllAsync(SearchParamsDTO searchParams)
         {
-            if (searchParams.PageNumber <= 0) searchParams.PageNumber = 1;
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber <= 0) pageNumber = 1;
 
             int pageSize = searchParams.PageSize ?? _defaultPageSize;
             int maxPageSize = 100;
             if (pageSize > maxPageSize) pageSize = maxPageSize;
+
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
 
             // Ordenamiento seguro: whitelist
             var allowedOrderFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "createdAt", "total" };
@@ -221,7 +231,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
             var (orders, totalCount) = await _orderRepository.GetAllAsync(searchParams);
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            var currentPage = searchParams.PageNumber > totalPages && totalPages > 0 ? totalPages : searchParams.PageNumber;
+            var currentPage = pageNumber > totalPages && totalPages > 0 ? totalPages : pageNumber;
 
             var dto = new ListedOrdersForAdminDTO
             {

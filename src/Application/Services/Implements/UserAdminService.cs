@@ -36,12 +36,17 @@ namespace TiendaProyecto.src.Application.Services.Implements
 
         public async Task<ListedUsersForAdminDTO> GetUsersAsync(UserSearchParamsDTO searchParams)
         {
-            // Validar parámetros de entrada
-            if (searchParams.PageNumber <= 0)
-                searchParams.PageNumber = 1;
+            // Validar parámetros de entrada - establecer valores por defecto
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber <= 0)
+                pageNumber = 1;
 
             var pageSize = searchParams.PageSize ?? _defaultPageSize;
             if (pageSize > 100) pageSize = 100; // Límite máximo
+
+            // Asignar valores validados al objeto searchParams
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
 
             // Validar ordenamiento
             var allowedOrderFields = new[] { "createdAt", "lastLogin", "email" };
@@ -70,7 +75,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Users = userDtos,
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                CurrentPage = searchParams.PageNumber,
+                CurrentPage = pageNumber,
                 PageSize = pageSize
             };
         }

@@ -177,16 +177,25 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Una lista de productos filtrados para el administrador.</returns>
         public async Task<ListedProductsForAdminDTO> GetFilteredForAdminAsync(SearchParamsDTO searchParams)
         {
+            // Establecer valores por defecto
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber < 1) pageNumber = 1;
+            
+            var pageSize = searchParams.PageSize ?? _defaultPageSize;
+            
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
+            
             Log.Information("Obteniendo productos para administrador con parámetros de búsqueda: {@SearchParams}", searchParams);
             var (products, totalCount) = await _productRepository.GetFilteredForAdminAsync(searchParams);
-            var totalPages = (int)Math.Ceiling((double)totalCount / (searchParams.PageSize ?? _defaultPageSize));
-            int currentPage = searchParams.PageNumber;
-            int pageSize = searchParams.PageSize ?? _defaultPageSize;
-            if (currentPage < 1 || currentPage > totalPages)
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            
+            if (pageNumber > totalPages && totalPages > 0)
             {
                 throw new ArgumentOutOfRangeException("El número de página está fuera de rango.");
             }
-            Log.Information("Total de productos encontrados: {TotalCount}, Total de páginas: {TotalPages}, Página actual: {CurrentPage}, Tamaño de página: {PageSize}", totalCount, totalPages, currentPage, pageSize);
+            Log.Information("Total de productos encontrados: {TotalCount}, Total de páginas: {TotalPages}, Página actual: {CurrentPage}, Tamaño de página: {PageSize}", totalCount, totalPages, pageNumber, pageSize);
 
             // Convertimos los productos filtrados a DTOs para la respuesta
             return new ListedProductsForAdminDTO
@@ -194,7 +203,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Products = products.Adapt<List<ProductForAdminDTO>>(),
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                CurrentPage = currentPage,
+                CurrentPage = pageNumber,
                 PageSize = pageSize
             };
 
@@ -207,9 +216,9 @@ namespace TiendaProyecto.src.Application.Services.Implements
         /// <returns>Una lista de productos filtrados para el cliente.</returns>
         public async Task<ListedProductsForCustomerDTO> GetFilteredForCustomerAsync(SearchParamsDTO searchParams)
         {
-
-            // Validaciones de entrada
-            if (searchParams.PageNumber < 1)
+            // Validaciones de entrada y establecer valores por defecto
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber < 1)
             {
                 throw new BadRequestAppException("El número de página debe ser mayor o igual a 1.");
             }
@@ -218,6 +227,12 @@ namespace TiendaProyecto.src.Application.Services.Implements
             {
                 throw new BadRequestAppException("El tamaño de página no puede ser mayor a 50.");
             }
+            
+            var pageSize = searchParams.PageSize ?? _defaultPageSize;
+            
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
 
             if (searchParams.MinPrice.HasValue && searchParams.MaxPrice.HasValue && searchParams.MinPrice > searchParams.MaxPrice)
             {
@@ -276,11 +291,9 @@ namespace TiendaProyecto.src.Application.Services.Implements
             // Total de productos
             var totalCount = await query.CountAsync();
 
-            // Paginación
-            var pageSize = searchParams.PageSize ?? _defaultPageSize;
-            var currentPage = searchParams.PageNumber;
+            // Paginación - usar las variables locales ya definidas
             var products = await query
-                .Skip((currentPage - 1) * pageSize)
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
@@ -290,7 +303,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Products = products.Adapt<List<ProductForCustomerDTO>>(),
                 TotalCount = totalCount,
                 TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
-                CurrentPage = currentPage,
+                CurrentPage = pageNumber,
                 PageSize = pageSize
                 };
                 }

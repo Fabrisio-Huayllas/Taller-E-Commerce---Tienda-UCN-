@@ -230,6 +230,17 @@ builder.Services.AddAuthorization(options =>
    
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // Configurar el panel de control de Hangfire
@@ -239,7 +250,6 @@ app.UseHangfireDashboard(builder.Configuration["HangfireDashboard:DashboardPath"
     DashboardTitle = builder.Configuration["HangfireDashboard:DashboardTitle"] ?? throw new InvalidOperationException("El título del panel de control de Hangfire no está configurado."),
     DisplayStorageConnectionString = builder.Configuration.GetValue<bool?>("HangfireDashboard:DisplayStorageConnectionString") ?? throw new InvalidOperationException("La configuración 'HangfireDashboard:DisplayStorageConnectionString' no está definida."),
 });
-
 
 #region Database Migration and jobs Configuration
 Log.Information("Aplicando migraciones a la base de datos");
@@ -265,6 +275,7 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<CorrelationMidware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
+app.UseCors("AllowLocalhost");  // ← AGREGAR AQUÍ (antes de UseAuthentication)
 
 // Activar Swagger solo en desarrollo
 if (app.Environment.IsDevelopment())

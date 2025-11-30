@@ -93,7 +93,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 
             // Normalizar pageNumber y limitar pageSize al máximo configurado
             int pageSize = searchParams.PageSize ?? _defaultPageSize;
-            int pageNumber = Math.Max(1, searchParams.PageNumber);
+            int pageNumber = Math.Max(1, searchParams.PageNumber ?? 1);
 
             // Orden por createdAt desc por defecto
             if (!string.IsNullOrWhiteSpace(searchParams.OrderBy))
@@ -182,7 +182,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
 
             // Normalizar pageNumber y limitar pageSize al máximo configurado
             int pageSize = searchParams.PageSize ?? _defaultPageSize;
-            int pageNumber = Math.Max(1, searchParams.PageNumber);
+            int pageNumber = Math.Max(1, searchParams.PageNumber ?? 1);
 
             // Ordenamiento seguro (whitelist)
             var orderBy = (searchParams.OrderBy ?? "createdAt").Trim().ToLower();

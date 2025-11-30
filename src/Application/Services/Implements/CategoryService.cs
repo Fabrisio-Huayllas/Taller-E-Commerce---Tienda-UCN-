@@ -33,8 +33,17 @@ namespace TiendaProyecto.src.Application.Services.Implements
 
         public async Task<ListedCategoriesDTO> GetAllAsync(SearchParamsDTO searchParams)
         {
-            var (categories, totalCount) = await _categoryRepository.GetAllAsync(searchParams);
+            // Establecer valores por defecto
+            var pageNumber = searchParams.PageNumber ?? 1;
+            if (pageNumber < 1) pageNumber = 1;
+            
             var pageSize = searchParams.PageSize ?? _defaultPageSize;
+            
+            // Asignar valores validados
+            searchParams.PageNumber = pageNumber;
+            searchParams.PageSize = pageSize;
+            
+            var (categories, totalCount) = await _categoryRepository.GetAllAsync(searchParams);
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var categoryDtos = new List<CategoryDetailDTO>();
@@ -51,7 +60,7 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 Categories = categoryDtos,
                 TotalCount = totalCount,
                 TotalPages = totalPages,
-                CurrentPage = searchParams.PageNumber,
+                CurrentPage = pageNumber,
                 PageSize = pageSize
             };
         }

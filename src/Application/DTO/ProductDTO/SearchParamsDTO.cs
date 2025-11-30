@@ -12,9 +12,9 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO
     public class SearchParamsDTO
     {
         /// <summary>
-        /// Número de página que se desea consultar.
+        /// Número de página que se desea consultar. Por defecto es 1.
         /// </summary>
-        public int PageNumber { get; set; } = 1;
+        public int? PageNumber { get; set; }
 
         /// <summary>
         /// Tamaño de página que se desea consultar.

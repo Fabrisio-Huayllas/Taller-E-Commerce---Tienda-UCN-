@@ -43,10 +43,11 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
             var totalCount = await query.CountAsync();
 
             // Paginación
+            var pageNumber = searchParams.PageNumber ?? 1;
             var pageSize = searchParams.PageSize ?? _defaultPageSize;
             var categories = await query
                 .OrderBy(c => c.Name)
-                .Skip((searchParams.PageNumber - 1) * pageSize)
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 

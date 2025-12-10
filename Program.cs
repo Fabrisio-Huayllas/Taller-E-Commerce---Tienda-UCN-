@@ -284,8 +284,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
+
+// CartMiddleware DEBE estar ANTES de Authentication/Authorization
+// para que pueda crear la cookie BuyerId antes de validar autenticación
+app.UseMiddleware<CartMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<CartMiddleware>();
 app.MapControllers();
 app.Run();

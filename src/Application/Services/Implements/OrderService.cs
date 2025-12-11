@@ -303,5 +303,18 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 _ => false
             };
         }
+
+        /// <summary>
+        /// Genera un PDF con los detalles de una orden.
+        /// </summary>
+        public async Task<byte[]> GenerateOrderPdfAsync(string orderCode)
+        {
+            // Obtener los detalles de la orden
+            var orderDetail = await GetDetailAsync(orderCode);
+            
+            // Generar el PDF usando QuestPDF
+            var document = new OrderPdfDocument(orderDetail);
+            return document.GeneratePdf();
+        }
     }
 }

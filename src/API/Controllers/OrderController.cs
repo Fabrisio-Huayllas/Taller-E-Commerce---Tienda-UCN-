@@ -55,6 +55,19 @@ namespace TiendaProyecto.src.API.Controllers
         }
 
         /// <summary>
+        /// Descarga un PDF con los detalles de una orden.
+        /// </summary>
+        /// <param name="orderCode">Código de la orden</param>
+        /// <returns>Archivo PDF de la orden.</returns>
+        [HttpGet("detail/{orderCode}/pdf")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> DownloadOrderPdf(string orderCode)
+        {
+            var pdfBytes = await _orderService.GenerateOrderPdfAsync(orderCode);
+            return File(pdfBytes, "application/pdf", $"orden-{orderCode}.pdf");
+        }
+
+        /// <summary>
         /// Obtiene las órdenes de un usuario.
         /// </summary>
         /// <param name="searchParams">Parámetros de búsqueda</param>

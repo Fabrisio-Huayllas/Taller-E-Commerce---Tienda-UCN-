@@ -44,5 +44,12 @@ namespace TiendaProyecto.src.Application.Services.Interfaces
         /// <param name="reason">Motivo del cambio de estado (opcional).</param>
         /// <returns>True si la actualización fue exitosa.</returns>
         Task<bool> ChangeStatusAsync(string orderCode, OrderStatus newStatus, int adminId, string? reason);
+
+        /// <summary>
+        /// Genera un PDF con los detalles de una orden.
+        /// </summary>
+        /// <param name="orderCode">Código de la orden</param>
+        /// <returns>Los bytes del PDF generado</returns>
+        Task<byte[]> GenerateOrderPdfAsync(string orderCode);
     }
 }

@@ -10,6 +10,7 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO.AdminDTO
     /// </remarks>
     public class ProductForAdminDTO
     {
+        public required int Id { get; set; }
         /// <summary>
         /// Título o nombre del producto.
         /// </summary>

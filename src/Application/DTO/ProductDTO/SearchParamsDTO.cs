@@ -71,6 +71,11 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO
         /// Dirección del ordenamiento (ascendente o descendente). Opcional.
         /// </summary>
         public string? SortDirection { get; set; }
+        /// <summary>
+        /// Filtrar productos por disponibilidad (activo/inactivo). Opcional.
+        /// </summary>
+        public bool? IsAvailable { get; set; }
+        
 
     }
 }

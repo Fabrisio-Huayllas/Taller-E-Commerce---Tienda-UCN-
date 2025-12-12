@@ -173,8 +173,7 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 .Include(p => p.Images.OrderBy(i => i.CreatedAt).Take(1)) // Cargamos la URL de la imagen principal a la hora de crear el producto
                 .AsNoTracking();
 
-            int totalCount = await query.CountAsync();
-
+            // Filtro por búsqueda de texto
             if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
             {
                 var searchTerm = searchParams.SearchTerm.Trim().ToLower();
@@ -190,9 +189,42 @@ namespace TiendaProyecto.src.Infrastructure.Repositories.Implements
                 );
             }
 
+            // Filtro por CategoryId
+            if (searchParams.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == searchParams.CategoryId.Value);
+            }
+
+            // Filtro por BrandId
+            if (searchParams.BrandId.HasValue)
+            {
+                query = query.Where(p => p.BrandId == searchParams.BrandId.Value);
+            }
+
+            // Filtro por IsAvailable (estado activo/inactivo)
+            if (searchParams.IsAvailable.HasValue)
+            {
+                query = query.Where(p => p.IsAvailable == searchParams.IsAvailable.Value);
+            }
+
+            // Filtro por precio mínimo
+            if (searchParams.MinPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= searchParams.MinPrice.Value);
+            }
+
+            // Filtro por precio máximo
+            if (searchParams.MaxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= searchParams.MaxPrice.Value);
+            }
+
+            // Contar DESPUÉS de aplicar filtros
+            int totalCount = await query.CountAsync();
+
             var products = await query
                 .OrderByDescending(p => p.CreatedAt)
-                .Skip((searchParams.PageNumber - 1) * searchParams.PageSize ?? _defaultPageSize)
+                .Skip(((searchParams.PageNumber ?? 1) - 1) * (searchParams.PageSize ?? _defaultPageSize))
                 .Take(searchParams.PageSize ?? _defaultPageSize)
                 .ToArrayAsync();
 

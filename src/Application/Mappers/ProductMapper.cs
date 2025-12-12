@@ -61,6 +61,7 @@ namespace TiendaProyecto.src.Application.Mappers
                 .Map(dest => dest.IsAvailable, src => src.IsAvailable);
 
             TypeAdapterConfig<Product, ProductForAdminDTO>.NewConfig()
+                .Map(dest => dest.Id, src => src.Id)
                 .Map(dest => dest.Title, src => src.Title)
                 .Map(dest => dest.MainImageURL, src => src.Images.FirstOrDefault() != null ? src.Images.First().ImageUrl : _defaultImageURL)
                 .Map(dest => dest.Price, src => src.Price.ToString("C"))

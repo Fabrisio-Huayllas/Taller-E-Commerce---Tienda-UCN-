@@ -325,12 +325,11 @@ namespace TiendaProyecto.src.Application.Services.Implements
         
         public async Task UpdateAsync(int id, UpdateProductDTO updateProductDTO)
         {
-            // Realizar la consulta directamente al repositorio
+            // Realizar la consulta directamente al repositorio SIN AsNoTracking para que EF rastree los cambios
             var product = await _productRepository.Query()
                 .Where(p => p.Id == id) // Buscar por ID
                 .Include(p => p.Category) // Incluir la categoría
                 .Include(p => p.Brand) // Incluir la marca
-                .AsNoTracking() // Evitar el seguimiento de cambios
                 .FirstOrDefaultAsync();
 
             // Validar si el producto no existe
@@ -339,10 +338,12 @@ namespace TiendaProyecto.src.Application.Services.Implements
                 throw new NotFoundException($"Producto con ID {id} no encontrado.");
             }
 
-            // Actualizar los campos del producto
+            // Actualizar TODOS los campos del producto
             product.Title = updateProductDTO.Name;
             product.Description = updateProductDTO.Description ?? string.Empty;
             product.Price = updateProductDTO.Price;
+            product.Discount = updateProductDTO.Discount;
+            product.Status = updateProductDTO.Status;
             product.Stock = updateProductDTO.Stock;
             product.CategoryId = updateProductDTO.CategoryId;
             product.BrandId = updateProductDTO.BrandId;

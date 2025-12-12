@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using TiendaProyecto.src.Domain.Models;
+
 namespace TiendaProyecto.src.Application.DTO.ProductDTO
 {
     public class UpdateProductDTO
@@ -17,6 +19,12 @@ namespace TiendaProyecto.src.Application.DTO.ProductDTO
         [Required(ErrorMessage = "El precio es obligatorio.")]
         [Range(1, int.MaxValue, ErrorMessage = "El precio debe ser mayor a 0.")]
         public int Price { get; set; }
+
+        [Range(0, 100, ErrorMessage = "El descuento debe estar entre 0 y 100.")]
+        public int Discount { get; set; } = 0;
+
+        [Required(ErrorMessage = "El estado es obligatorio.")]
+        public Status Status { get; set; }
 
         [Required(ErrorMessage = "El stock es obligatorio.")]
         [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo.")]
